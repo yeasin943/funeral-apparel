@@ -1,0 +1,179 @@
+{%- liquid
+  if section.settings.enable_subcoll and section.settings.subcoll_menu != blank
+    assign current_link_parent = false
+    for link in linklists[section.settings.subcoll_menu].links
+      if link.links != empty
+        if link.type == 'collection_link' and link.object.handle == collection.handle
+          assign current_link_parent = link
+          break
+        elsif link.type == 'catalog_link' and collection.handle == 'all'
+          assign current_link_parent = link
+          break
+        endif
+      endif
+      if link.links != blank and current_link_parent == false
+        for child_link in link.links
+          if child_link.type == 'collection_link' and child_link.object.handle == collection.handle
+            if child_link.links == empty
+              assign current_link_parent = link
+            else
+              assign current_link_parent = child_link
+            endif
+            break
+          endif
+          if child_link.type == 'catalog_link' and collection.handle == 'all'
+            if child_link.links == empty
+              assign current_link_parent = link
+            else
+              assign current_link_parent = child_link
+            endif
+            break
+          endif
+          if child_link.links != blank and current_link_parent == false
+            for child_child_link in child_link.links
+              if child_child_link.type == 'collection_link' and child_child_link.object.handle == collection.handle
+                assign current_link_parent = child_link
+                break
+              elsif child_child_link.type == 'catalog_link' and collection.handle == 'all'
+                assign current_link_parent = child_link
+                break
+              endif
+            endfor
+          endif
+        endfor
+      endif
+    endfor
+  endif
+-%}
+
+{%- if current_link_parent -%}
+  {%- assign subcoll_count = 0 -%}
+  {% capture subcollection_html %}
+    {% if section.settings.subcoll_style == 'buttons' %}
+      <div class="container">
+        <div class="subcollection-links subcollection-links--buttons align-center lightish-spaced-row-above{% if header_image_enabled %} image-overlay__over{% endif %}">
+          {%- for link in current_link_parent.links -%}
+            {%- unless link.object.handle == collection.handle or link.type != 'collection_link' -%}
+              {%- assign subcoll_count = subcoll_count | plus: 1 -%}
+              <a class="btn btn--tertiary" href="{{ link.url }}">{{ link.title | escape }}</a>
+            {%- endunless -%}
+          {%- endfor -%}
+        </div>
+      </div>
+    {% else %}
+      {% unless section.settings.subcoll_gall_full_width %}
+        <div class="container container--not-mobile lightish-spaced-row-above lightish-spaced-row-above--not-mobile">
+      {% endunless %}
+      <div class="subcollection-links subcollection-links--gallery {% if section.settings.subcoll_gall_full_width %}subcollection-links--is-full-width{% endif %} {% if section.settings.subcoll_gall_mobile_layout == 'hide' %}desktop-only{% endif %} {% if header_image_enabled %}subcollection-links--under-image-header{% endif %}">
+        <div class="gallery slick-slider-overlay-dots {% if section.settings.subcoll_gall_enable_margin %} gallery--with-margins{% endif %}{% if section.settings.subcoll_gall_full_width and section.settings.subcoll_gall_enable_margin %} gallery--with-vertical-outer-padding{% endif %}"
+            data-mobile-item-count="{{ section.settings.subcoll_gall_mobile_layout }}">
+          {%- for link in current_link_parent.links -%}
+            {%- unless link.object.handle == collection.handle or link.type != 'collection_link' -%}
+              {%- assign subcoll_count = subcoll_count | plus: 1 -%}
+              <div class="gallery__item
+                  gallery__item--shape-fixed
+                  gallery__item--shape-{{ section.settings.subcoll_gall_shape }}
+                  gallery__item-{{ forloop.index }}
+                  image-overlay
+                  image-overlay--bg-{{ section.settings.subcoll_gall_overlay_style }}
+                  image-overlay--edge-boxes
+                  lazyload--placeholder
+                  {% unless section.settings.subcoll_gall_full_width and section.settings.subcoll_gall_enable_margin == false %}image-overlay--edge-boxes--pad-to-corner{% endunless %}
+                  ">
+                <a class="image-overlay__image-link" href="{{ link.url }}">
+                  {%- liquid
+                    if link.object.featured_image
+                      assign subcoll_image = link.object.featured_image
+                    else
+                      assign subcoll_image = false
+                    endif
+                  -%}
+                  {%- if subcoll_image -%}
+                    <div class="gallery__image rimage-outer-wrapper rimage-background lazyload--manual fade-in"
+                        data-bgset="{% render 'bgset', image: subcoll_image %}"
+                        data-sizes="auto"
+                        data-parent-fit="cover"
+                        style="background-position: {{ section.settings.image_position }}">
+                      <noscript>
+                        <div class="rimage-wrapper" style="padding-top:{{ 1 | divided_by: subcoll_image.aspect_ratio | times: 100 }}%">
+                          <img src="{{ subcoll_image | img_url: '512x512' }}" alt="{{ subcoll_image.alt | escape }}" class="rimage__image">
+                        </div>
+                      </noscript>
+                    </div>
+                  {%- else -%}
+                    <div class="gallery__image placeholder-image dark">
+                      {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+                    </div>
+                  {%- endif -%}
+
+                  <div class="overlay-text overlay--v-{{ section.settings.subcoll_gall_text_alignment | split: ' ' | first }} overlay--h-{{ section.settings.subcoll_gall_text_alignment | split: ' ' | last }} image-overlay__over">
+                    <div class="overlay-text__inner">
+                      <div class="overlay-text__text">
+                        <h2 class="overlay-text__title h4-style">{{ link.title }}</h2>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            {%- endunless -%}
+          {%- endfor -%}
+        </div>
+      </div>
+      {% unless section.settings.subcoll_gall_full_width %}
+        </div>
+      {% endunless %}
+    {% endif %}
+  {% endcapture %}
+  {%- liquid
+    if subcoll_count < 2
+      assign subcollection_html = ''
+    endif
+  -%}
+{%- endif -%}
+
+ {%- if current_link_parent and section.settings.subcoll_style == 'buttons' -%}
+                {{ subcollection_html }}
+              {%- endif -%}
+{% schema %}
+{
+"name": "Collections Top",
+"class": "collection-top",
+"settings": [ {
+        "type": "checkbox",
+        "id": "enable_subcoll",
+        "label": "Enable subcollections",
+        "info": "A menu must be selected below",
+        "default": true
+      },
+
+    {
+        "type": "link_list",
+        "id": "subcoll_menu",
+        "label": "Subcollections menu",
+        "info": "This is usually your main menu",
+        "default": "main-menu"
+      },
+      {
+        "type": "select",
+        "id": "subcoll_style",
+        "label": "Subcollections style",
+        "default": "buttons",
+        "options": [
+          {
+            "value": "buttons",
+            "label": "Buttons"
+          },
+          {
+            "value": "gallery",
+            "label": "Gallery"
+          }
+        ]
+      },
+],
+"presets": [
+    {
+    "name": "Collections Top",
+    }
+]
+}
+{% endschema %}

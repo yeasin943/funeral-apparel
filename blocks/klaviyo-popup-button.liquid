@@ -1,0 +1,199 @@
+{%- doc -%}
+  Renders a button that opens a Klaviyo pop-up form, with an optional separate form on mobile.
+  Form IDs and button styling come from block.settings. The button renders only when a form ID is set,
+  except in the theme editor.
+{%- enddoc -%}
+
+{% liquid
+  assign block_settings = block.settings
+  assign desktop_form_id = block_settings.desktop_form_id | strip | remove: 'klaviyo-form-'
+  assign mobile_form_id = block_settings.mobile_form_id | strip | remove: 'klaviyo-form-'
+%}
+
+{% if desktop_form_id != blank or mobile_form_id != blank or request.design_mode %}
+  <script
+    src="{{ 'klaviyo-form-trigger.js' | asset_url }}"
+    type="module"
+  ></script>
+
+  {% render 'button-custom-styles', block_settings: block_settings, block_id: block.id %}
+
+  <klaviyo-form-trigger
+    class="klaviyo-form-trigger"
+    data-desktop-form-id="{{ desktop_form_id | escape }}"
+    data-mobile-form-id="{{ mobile_form_id | escape }}"
+    {{ block.shopify_attributes }}
+  >
+    <button
+      type="button"
+      on:click="/openForm"
+      aria-haspopup="dialog"
+      class="
+        size-style
+        {{ block_settings.style_class }}
+        {{ block_settings.style_class }}--{{ block.id }}
+      "
+      style="{% render 'size-style', settings: block_settings %}"
+    >
+      {{ block_settings.label | escape }}
+    </button>
+  </klaviyo-form-trigger>
+{% endif %}
+
+{% stylesheet %}
+  .klaviyo-form-trigger {
+    display: block;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.klaviyo_popup_button",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "label",
+      "label": "t:settings.label",
+      "default": "t:text_defaults.klaviyo_button_label"
+    },
+    {
+      "type": "text",
+      "id": "desktop_form_id",
+      "label": "t:settings.klaviyo_desktop_form_id",
+      "info": "t:info.klaviyo_form_id"
+    },
+    {
+      "type": "text",
+      "id": "mobile_form_id",
+      "label": "t:settings.klaviyo_mobile_form_id",
+      "info": "t:info.klaviyo_form_id"
+    },
+    {
+      "type": "select",
+      "id": "style_class",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "button",
+          "label": "t:options.primary"
+        },
+        {
+          "value": "button-secondary",
+          "label": "t:options.secondary"
+        },
+        {
+          "value": "button-unstyled",
+          "label": "t:options.link"
+        },
+        {
+          "value": "button-custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "button",
+      "info": "t:info.edit_button_style_in_theme_settings"
+    },
+    {
+      "type": "header",
+      "content": "t:content.button_colors",
+      "visible_if": "{{ block.settings.style_class == \"button-custom\" }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_background",
+      "label": "t:settings.background",
+      "default": "{{ settings.color_palette.foreground }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_text",
+      "label": "t:settings.text",
+      "default": "{{ settings.color_palette.background }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "custom_button_border",
+      "label": "t:settings.borders",
+      "default": "{{ settings.color_palette.background }}",
+      "alpha": true,
+      "visible_if": "{{ block.settings.style_class == 'button-custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "link_text_color",
+      "label": "t:settings.link_text_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ block.settings.style_class == 'button-unstyled' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.size"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width_desktop",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "t:settings.custom_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == \"custom\" }}"
+    },
+    {
+      "type": "select",
+      "id": "width_mobile",
+      "label": "t:settings.width_mobile",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width_mobile",
+      "label": "t:settings.custom_width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width_mobile == \"custom\" }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.klaviyo_popup_button",
+      "category": "t:categories.forms"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,128 @@
+{% doc %}
+  @prompt
+    create a banner section that renders mobile and desktop image seprately plus support the transparent header of this theme and does not crop the image on mobile 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-image-banner-{{ ai_gen_id }} {
+    display: block;
+    position: relative;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    overflow: hidden;
+    background: #f5f5f5;
+  }
+  .ai-image-banner-{{ ai_gen_id }}__media {
+    display: block;
+    width: 100%;
+    line-height: 0;
+  }
+  .ai-image-banner-{{ ai_gen_id }}__image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .ai-image-banner-{{ ai_gen_id }}__placeholder {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    background: #f1f1f1;
+  }
+  .ai-image-banner-{{ ai_gen_id }}__placeholder svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ai-image-banner-{{ ai_gen_id }}__empty-state {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    color: #333333;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 8px 12px;
+    border-radius: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .ai-image-banner-{{ ai_gen_id }}__desktop { display: block; }
+  .ai-image-banner-{{ ai_gen_id }}__mobile { display: none; }
+  @media screen and (max-width: 749px) {
+    .ai-image-banner-{{ ai_gen_id }} {
+      width: 100%;
+      overflow: visible;
+    }
+    .ai-image-banner-{{ ai_gen_id }}__desktop { display: none; }
+    .ai-image-banner-{{ ai_gen_id }}__mobile { display: block; }
+    .ai-image-banner-{{ ai_gen_id }}__placeholder { aspect-ratio: 3 / 4; }
+  }
+{% endstyle %}
+
+<div class="ai-image-banner-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+{%  if block.settings.image_link != blank %}
+  <a href="{{ block.settings.image_link  }}">
+  {% endif %}
+  {% if block.settings.mobile_image != blank or block.settings.desktop_image != blank %}
+    <picture class="ai-image-banner-{{ ai_gen_id }}__media">
+      {% if block.settings.mobile_image != blank %}
+        <source media="(max-width: 749px)" srcset="{{ block.settings.mobile_image | image_url: width: 1200 }}">
+      {% endif %}
+      {% if block.settings.desktop_image != blank %}
+        <img class="ai-image-banner-{{ ai_gen_id }}__image" src="{{ block.settings.desktop_image | image_url: width: 2400 }}" alt="{{ block.settings.desktop_image.alt | default: block.settings.mobile_image.alt | escape }}" width="{{ block.settings.desktop_image.width }}" height="{{ block.settings.desktop_image.height }}" loading="lazy">
+      {% else %}
+        <img class="ai-image-banner-{{ ai_gen_id }}__image" src="{{ block.settings.mobile_image | image_url: width: 1200 }}" alt="{{ block.settings.mobile_image.alt | escape }}" width="{{ block.settings.mobile_image.width }}" height="{{ block.settings.mobile_image.height }}" loading="lazy">
+      {% endif %}
+    </picture>
+  {% else %}
+    <div class="ai-image-banner-{{ ai_gen_id }}__placeholder">
+      {{ 'image' | placeholder_svg_tag }}
+      <span class="ai-image-banner-{{ ai_gen_id }}__empty-state">Add desktop and mobile banner images</span>
+    </div>
+  {% endif %}
+   {%  if block.settings.image_link != blank %}
+  </a>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Responsive image banner",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "desktop_image",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "Mobile image"
+    },
+    {
+    "type": "url",
+    "id":"image_link",
+    "label": "Image Link"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    }
+  ],
+  "presets": [
+    {
+      "name": "Responsive image banner"
+    }
+  ],
+  "tag": null,
+  "class": "responsive-image-banner"
+}
+{% endschema %}

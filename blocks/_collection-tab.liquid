@@ -1,0 +1,40 @@
+{% liquid
+  assign first_tab = section.blocks | where: 'type', '_collection-tab' | first
+  assign is_active = false
+  if first_tab.id == block.id
+    assign is_active = true
+  endif
+%}
+
+<button
+  type="button"
+  class="collection-tabs__tab"
+  id="CollectionTab-{{ block.id }}"
+  role="tab"
+  aria-controls="CollectionPanel-{{ block.id }}"
+  aria-selected="{{ is_active }}"
+  data-tab="{{ block.id }}"
+  {{ block.shopify_attributes }}
+>
+  {{ block.settings.title | default: block.settings.collection.title | default: 'Collection' }}
+</button>
+
+{% schema %}
+{
+  "name": "Collection tab",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "info": "Leave empty to use the collection title."
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    }
+  ]
+}
+{% endschema %}
