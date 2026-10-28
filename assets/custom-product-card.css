@@ -1,3 +1,112 @@
-button.quick-add__button {
-    width: unset;
+/* Sold out: always visible text button, not the hover-revealed icon */
+.quick-add button.quick-add__button--sold-out:disabled {
+  display: flex;
+  justify-content: center;
+  width: max-content;
+  padding-inline: var(--padding-sm);
+  opacity: var(--opacity-muted-text);
+  cursor: not-allowed;
+  scale: 1;
+}
+
+/* Choose options: full-width text button along the bottom of the image */
+.quick-add button.quick-add__button--choose {
+  /* inset-inline: var(--quick-add-inset-inline-end);
+  inset-block-end: var(--quick-add-inset-block-end); */
+  justify-content: center;
+  width: 100%;
+  max-inline-size: none;
+  padding-inline: var(--padding-md);
+  border: 0;
+  border-radius: 0;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  font-size: var(--font-size--xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: none;
+  left: 0;
+  bottom: 0;
+
+  &:hover {
+    scale: 1;
+  }
+}
+
+/* Size pills */
+.quick-add__sizes {
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: absolute;
+    pointer-events: none;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    padding: 12px 14px 14px;
+    
+
+  /* Only hide until hover where hover exists; touch devices always show the panel */
+  @media (hover: hover) and (min-width: 750px) {
+    opacity: 0;
+
+    .quick-add__size {
+      pointer-events: none;
+    }
+  }
+}
+.quick-add__sizes-label {
+    color: #6B6B6B;
+    /* font-family: Archivo; */
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: 1.8px;
+}
+product-card:is(:hover, :focus-within) .quick-add__sizes {
+  opacity: 1;
+
+  .quick-add__size {
+    pointer-events: all;
+  }
+}
+.--size-button-wrapper {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.quick-add__size {
+  min-inline-size: var(--button-size-md);
+  height: var(--button-size-md);
+  padding-inline: var(--padding-xs);
+  border: 1px solid rgb(var(--color-foreground-rgb) / var(--opacity-30));
+  border-radius: var(--style-border-radius-buttons-secondary, 0);
+  background: var(--quick-add-background, var(--color-background));
+  color: var(--quick-add-foreground, var(--color-foreground));
+  font: inherit;
+  cursor: pointer;
+  pointer-events: all;
+  font-size: 12px;
+  line-height: 14px;
+  font-weight: 600;
+
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-foreground);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-foreground);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    text-decoration: line-through;
+    opacity: var(--opacity-muted-text);
+  }
 }

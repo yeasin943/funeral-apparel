@@ -149,6 +149,44 @@ export class QuickAddComponent extends Component {
     this.#openQuickAddModal();
   };
 
+  /**
+   * Adds the clicked size's variant straight to the cart.
+   * @param {Event} event - The click event
+   */
+  handleSizeClick = (event) => {
+    event.preventDefault();
+
+    // Component events are delegated from the document, so currentTarget is not the button
+    const button = event.target;
+    if (!(button instanceof HTMLButtonElement) || button.disabled) return;
+
+    const variantId = button.dataset.variantId;
+    const input = this.querySelector('input[name="id"]');
+    const form = input?.closest('form');
+    if (!variantId || !(input instanceof HTMLInputElement) || !form) return;
+
+    input.value = variantId;
+    input.disabled = false;
+
+    // Lock the pills until this add settles so a double click can't add twice
+    const sizeButtons = /** @type {NodeListOf<HTMLButtonElement>} */ (this.querySelectorAll('.quick-add__size'));
+    const lockedButtons = Array.from(sizeButtons).filter((sizeButton) => !sizeButton.disabled);
+    const unlock = () => lockedButtons.forEach((sizeButton) => (sizeButton.disabled = false));
+    lockedButtons.forEach((sizeButton) => (sizeButton.disabled = true));
+
+    document.addEventListener(
+      StandardEvents.cartLinesUpdate,
+      (/** @type {CartLinesUpdateEvent} */ updateEvent) => {
+        updateEvent.promise?.then(unlock, unlock) ?? unlock();
+      },
+      { once: true }
+    );
+    // Fallback if the add never dispatches an update event
+    setTimeout(unlock, 5000);
+
+    form.requestSubmit();
+  };
+
   #resetScroll() {
     const dialogComponent = document.getElementById('quick-add-dialog');
     if (!(dialogComponent instanceof QuickAddDialog)) return;

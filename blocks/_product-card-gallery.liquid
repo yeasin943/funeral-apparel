@@ -26,9 +26,11 @@
 </div>
       </div>
     {%- endif -%}
+  {% if product.metafields.custom.secondary_badge != blank %}
+      <div class="--secondary-badge product-badges product-badges--top-right product-badges__badge product-badges__badge--rectangle">{{- product.metafields.custom.secondary_badge -}}</div>
 
-    <div class="--secondary-badge product-badges product-badges--top-right product-badges__badge product-badges__badge--rectangle">New</div>
-    {% if product.available and settings.quick_add or settings.mobile_quick_add %}
+  {% endif %}
+    {% if settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add', product: product, section_id: section.id %}
     {% endif %}
   {% endunless %}

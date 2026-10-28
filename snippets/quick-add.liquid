@@ -4,6 +4,8 @@
   @param {object} product - The product object
   @param {string} section_id - The section ID
   @param {object} [block] - The block object
+
+  Renders one of: sold-out button, direct add, size pills (Size is the only option), or Choose (opens modal).
 {%- enddoc -%}
 
 {% liquid
@@ -24,34 +26,30 @@
     assign can_add_to_cart = false
   endif
 
-  # Both buttons are rendered together only for single-option swatch products - the one
-  # case where a card swatch click resolves the variant, so JS can flip choose -> add
-  # without navigating. Every other shape is fixed at render, so it gets just one button.
+  # Which control the card gets is fixed at render:
+  #   sold out        - no variant is available, so a disabled "Sold out" button
+  #   add             - a single (default) variant adds straight to cart
+  #   sizes           - "Size" is the only option, so each size is an add-to-cart pill
+  #   choose          - anything else opens the quick-add modal
   # Selling plans always go to the PDP, since subscription widgets only run there.
   assign initial_button = 'choose'
   assign render_add = false
   assign render_choose = false
+  assign render_sizes = false
+  assign render_sold_out = false
 
-  if product.variants_count == 1
+  if product.available == false
+    assign initial_button = 'sold-out'
+    assign render_sold_out = true
+  elsif uses_selling_plans
+    assign render_choose = true
+  elsif product.variants_count == 1
     assign initial_button = 'add'
     assign render_add = true
-  elsif product.options.size == 1
-    assign first_option = product.options_with_values | first
-    assign swatch_count = first_option.values | map: 'swatch' | compact | size
-    assign render_choose = true
-    if product.selected_variant.available
-      assign initial_button = 'add'
-      assign render_add = true
-    elsif swatch_count > 0
-      assign render_add = true
-    endif
+  elsif product.options.size == 1 and product.options_with_values.first.name == 'Size'
+    assign initial_button = 'sizes'
+    assign render_sizes = true
   else
-    assign render_choose = true
-  endif
-
-  if uses_selling_plans
-    assign initial_button = 'choose'
-    assign render_add = false
     assign render_choose = true
   endif
 %}
@@ -59,23 +57,14 @@
 {% render 'fly-to-cart-styles' %}
 
 {% comment %}
-  Only the button(s) a card can actually use are rendered in the DOM (gated by render_add / render_choose).
-  When both are rendered, only one is shown at a time based on the data-quick-add-button attribute.
+  Quick add shape (see the logic above):
+    - Sold out: disabled "Sold out" button
+    - One variant: "Add" button adds directly
+    - Only option is Size: one pill per size, each adds that variant directly (unavailable sizes disabled)
+    - Anything else (or selling plans): "Choose" button opens the quick-add modal
 
-  Logic for Add vs. Choose buttons:
-    Display "Add" button and add directly to cart if:
-      - There is only one variant on the product
-      - There is only one product option, and it is displayed as swatches on the product card, and the selected variant is available
-    Display "Choose" button and show the quick-add modal if:
-      - There is only one product option, and it is displayed as swatches on the product card, and no variant is selected, or the selected variant is unavailable
-      - There is more than one product option
-
-  Both buttons are only rendered together for a single-option product with interactive swatches, because
-  that is the only shape whose data-quick-add-button can flip live (choose -> add) when a swatch is selected.
-
-  The add-to-cart form (product-form-component + hidden inputs + live region) is only rendered when the
-  card can add to cart directly (render_add). The Choose button never submits a form - it opens the
-  quick-add modal via quick-add-component/handleClick - so it lives outside the form.
+  The add-to-cart form is only rendered for the add and sizes shapes. The Choose and Sold out
+  buttons never submit a form, so they live outside it.
 {% endcomment %}
 <quick-add-component
   class="quick-add custom-color-quick-add"
@@ -85,9 +74,8 @@
   data-quick-add-button="{{ initial_button }}"
   data-product-options-count="{{ product.options.size }}"
   data-uses-selling-plans="{{ uses_selling_plans }}"
-  data-renders-both-buttons="{% if render_add and render_choose %}true{% endif %}"
 >
-  {% if render_add %}
+  {% if render_add or render_sizes %}
     <product-form-component
       data-section-id="{{ section_id }}"
       data-product-id="{{ product.id }}"
@@ -116,15 +104,50 @@
           name="quantity"
           value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
         >
-        {% render 'add-to-cart-button',
-          add_to_cart_text: add_to_cart_text,
-          class: 'quick-add__button quick-add__button--add add-to-cart-button',
-          can_add_to_cart: can_add_to_cart,
-          show_icon: true,
-          product: product
-        %}
+        {% if render_sizes %}
+          <div
+            class="quick-add__sizes"
+            role="group"
+            aria-label="{{ 'actions.add' | t }}: {{ product.options_with_values.first.name | escape }}"
+          >
+            <div class="quick-add__sizes-label">QUICK ADD · SELECT SIZE</div>
+            <div class="--size-button-wrapper">
+              {% for size_variant in product.variants %}
+                <button
+                  type="button"
+                  class="quick-add__size"
+                  data-variant-id="{{ size_variant.id }}"
+                  on:click="quick-add-component/handleSizeClick"
+                  {% unless size_variant.available %}
+                    disabled
+                  {% endunless %}
+                >
+                  {{- size_variant.option1 -}}
+                </button>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          {% render 'add-to-cart-button',
+            add_to_cart_text: add_to_cart_text,
+            class: 'quick-add__button quick-add__button--add add-to-cart-button',
+            can_add_to_cart: can_add_to_cart,
+            show_icon: true,
+            product: product
+          %}
+        {% endif %}
       {%- endform -%}
     </product-form-component>
+  {% endif %}
+
+  {% if render_sold_out %}
+    <button
+      type="button"
+      class="button quick-add__button quick-add__button--sold-out add-to-cart-button"
+      disabled
+    >
+      {{- 'actions.sold_out' | t -}}
+    </button>
   {% endif %}
 
   {% if render_choose %}
@@ -133,12 +156,6 @@
       name="add"
       on:click="quick-add-component/handleClick"
     >
-      <span
-        aria-hidden="true"
-        class="svg-wrapper add-to-cart-icon"
-      >
-        {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
-      </span>
       {{- choose_options_text -}}
     </button>
   {% endif %}

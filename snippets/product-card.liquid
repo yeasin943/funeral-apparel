@@ -23,7 +23,7 @@
 
 {% liquid
   assign has_quick_add = false
-  if settings.quick_add and product.available
+  if settings.quick_add
     assign has_quick_add = true
   endif
 

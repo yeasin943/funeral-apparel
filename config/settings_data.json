@@ -69,6 +69,8 @@
     "button_border_radius_secondary": 2,
     "button_text_case_secondary": "uppercase",
     "cart_type": "drawer",
+    "auto_open_cart_drawer": true,
+    "mobile_quick_add": true,
     "cart_price_font": "body",
     "drawer_background_color": "{{ settings.color_palette.background }}",
     "drawer_text_color": "{{ settings.color_palette.foreground }}",
