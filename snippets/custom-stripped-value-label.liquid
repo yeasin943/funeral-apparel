@@ -1,0 +1,19 @@
+{% comment %} {% render 'custom-stripped-value-label' , value: product_option_value %} {% endcomment %}
+{% assign valueHandle = value | handle %}
+
+{% case valueHandle %}
+  {% when 'x-small' %}
+    XS
+  {% when 'extra-small' %}
+    XS
+  {% when 'small' %}
+    S
+  {% when 'medium' %}
+    M
+  {% when 'large' %}
+    L
+  {% when 'extra-large' %}
+    XL
+  {% else %}
+    {{- value | escape -}}
+{% endcase %}

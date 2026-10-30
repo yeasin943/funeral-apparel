@@ -159,7 +159,9 @@
                     class="variant-option__button-label__text"
                     data-key="variant-option-text"
                   >
-                    {{- product_option_value | escape -}}
+                    {% render 'custom-stripped-value-label' , value: product_option_value %}
+                    {% comment %} {{- product_option_value | escape -}}  {% endcomment %}
+                   
                   </span>
                 {% endif %}
                 {% render 'strikethrough-variant', product_option: product_option_value %}

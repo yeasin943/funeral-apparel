@@ -122,7 +122,8 @@
                     disabled
                   {% endunless %}
                 >
-                  {{- size_variant.option1 -}}
+                  {% comment %} {{- size_variant.option1 -}} {% endcomment %}
+                  {% render 'custom-stripped-value-label' , value: size_variant.option1 %}
                 </button>
               {% endfor %}
             </div>
