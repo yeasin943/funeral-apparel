@@ -174,7 +174,8 @@
       </footer>
     </div>
 
-    {% render 'cart-drawer', render_wrapper: true %}
+    {% comment %} {% render 'cart-drawer', render_wrapper: true %} {% endcomment %}
+     {% render 'cart-drawer-cro' %}
     {% render 'theme-drawer' %}
 
     {% render 'search-modal' %}

@@ -91,7 +91,7 @@
     <a
       class="contents"
       ref="cardGalleryLink"
-      href="{{ product.url }}"
+      href="{{ product.url | within: collection }}"
       aria-label="{{- product.title -}}"
     >
       {% liquid
@@ -216,7 +216,7 @@
       <a
         class="contents"
         ref="cardGalleryLink"
-        href="{{ product.url }}"
+        href="{{ product.url | within: collection }}"
       >
         <span class="title-text">{{- product.title -}}</span>
       </a>

@@ -302,7 +302,8 @@
             type: '_product-card',
             id: 'static-product-card',
             closest.product: product,
-            product_view_context: 'collection'
+            product_view_context: 'collection',
+            collection: tab_collection
           %}
         </div>
       {% endfor %}
@@ -311,7 +312,7 @@
     <div class="collection-tabs__row" role="tabpanel">
       {% for i in (1..4) %}
         <div class="collection-tabs__item">
-          {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
+          {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null , collection: collection %}
         </div>
       {% endfor %}
     </div>

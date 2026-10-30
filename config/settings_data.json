@@ -9,7 +9,7 @@
  */
 {
   "current": {
-    "logo": "shopify://shop_images/Attachment_1630112709_fbe3f256-9513-4f92-b3d4-489f4778b379_640x_png.webp",
+    "logo": "shopify://shop_images/Logo_Funeral_Apparel_wordmark.png",
     "logo_inverse": "shopify://shop_images/Gemini_Generated_Image_htepjxhtepjxhtep.jpg",
     "logo_height": 80,
     "logo_height_mobile": 50,
@@ -50,7 +50,7 @@
     "card_hover_effect": "subtle-zoom",
     "badge_position": "top-left",
     "badge_corner_radius": 2,
-    "badge_sale_background_color": "#FB0808",
+    "badge_sale_background_color": "#A3121C",
     "badge_sale_text_color": "{{ settings.color_palette.background }}",
     "badge_sold_out_background_color": "{{ settings.color_palette.foreground }}",
     "badge_sold_out_text_color": "{{ settings.color_palette.background }}",
@@ -70,6 +70,15 @@
     "button_text_case_secondary": "uppercase",
     "cart_type": "drawer",
     "cart_price_font": "body",
+    "auto_open_cart_drawer": true,
+    "cart_drawer_empty_icon": true,
+    "cart_drawer_empty_heading": "Your cart is empty",
+    "cart_drawer_tile_1_image": "shopify://shop_images/v2-hero-family-ties.webp",
+    "cart_drawer_tile_1_link": "shopify://collections/menswear",
+    "cart_drawer_tile_2_image": "shopify://shop_images/Women_collection_swap_for_a_women_s_campaign_image_94e3f46a-07b9-4211-b1e3-8af3511ff49c.png",
+    "cart_drawer_tile_2_link": "shopify://collections/womens",
+    "cart_drawer_browse_menu": "empty-cart-menu",
+    "cart_drawer_recs_collection": "best-sellers",
     "drawer_background_color": "{{ settings.color_palette.background }}",
     "drawer_text_color": "{{ settings.color_palette.foreground }}",
     "drawer_border_color": "{{ settings.color_palette.color1 }}",
@@ -83,6 +92,7 @@
     "popover_background_color": "{{ settings.color_palette.background }}",
     "popover_text_color": "{{ settings.color_palette.foreground }}",
     "popover_border_radius": 8,
+    "mobile_quick_add": true,
     "quick_add_background": "{{ settings.color_palette.background }}",
     "quick_add_text": "{{ settings.color_palette.foreground }}",
     "product_corner_radius": 2,
@@ -100,6 +110,7 @@
     "variant_button_border_width": 1,
     "variant_button_radius": 2,
     "variant_button_width": "equal-width-buttons",
+    "cart_drawer_empty_text": "Not sure where to start? Pick a side.",
     "content_for_index": [],
     "blocks": {
       "14060646107696862457": {
@@ -126,11 +137,6 @@
           "widget_type": "review-widget"
         }
       },
-      "14152569897387207382": {
-        "type": "shopify://apps/section-store/blocks/block-cart/d7a2e423-ea88-4344-b866-6d0fb487c3dd",
-        "disabled": false,
-        "settings": {}
-      },
       "3156526161536407824": {
         "type": "shopify://apps/section-store/blocks/block-bundle-embed/d7a2e423-ea88-4344-b866-6d0fb487c3dd",
         "disabled": false,
@@ -142,6 +148,11 @@
       "855628211100114053": {
         "type": "shopify://apps/klaviyo-email-marketing-sms/blocks/klaviyo-onsite-embed/2632fe16-c075-4321-a88b-50b567f42507",
         "disabled": false,
+        "settings": {}
+      },
+      "14152569897387207382": {
+        "type": "shopify://apps/section-store/blocks/block-cart/d7a2e423-ea88-4344-b866-6d0fb487c3dd",
+        "disabled": true,
         "settings": {}
       }
     },

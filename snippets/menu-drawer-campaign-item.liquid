@@ -1,0 +1,165 @@
+{%- doc -%}
+  Renders one top-level link of the "Campaign" menu style as a mobile drawer accordion: a
+  "Shop all" link, second-tier headings with their links, then the item's promo.
+  Second-tier links without children render as linked headings.
+
+  @param {object} link - The top-level menu link; must have child links.
+  @param {number} index - Position of the link in the menu, used for unique IDs.
+  @param {string} [promo] - Markup of the matching `_mega-menu-promo` block.
+  @param {boolean} [dividers] - Whether the drawer shows dividers between items.
+
+  @example
+  {% render 'menu-drawer-campaign-item', link: link, index: forloop.index, promo: promo %}
+{%- enddoc -%}
+
+{%- liquid
+  assign item_id = 'HeaderDrawerCampaign-' | append: index
+  assign shop_all_label = 'actions.shop_all_title' | t: title: link.title
+-%}
+
+{%- capture accordion_children -%}
+  <details
+    id="Details-menu-drawer-menu-item-{{ index }}"
+    class="menu-drawer-campaign{% if dividers %} menu-drawer__menu-container--divider{% endif %}"
+  >
+    <summary
+      id="HeaderDrawer-{{ link.handle }}"
+      class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element{% if link.child_active %} menu-drawer__menu-item--active{% endif %}"
+    >
+      <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+      <span class="svg-wrapper icon-plus">
+        {{- 'icon-plus.svg' | inline_asset_content -}}
+      </span>
+    </summary>
+    <div class="details-content menu-drawer-campaign__content">
+      <a
+        href="{{ link.url }}"
+        class="menu-drawer-campaign__link menu-drawer-campaign__link--all"
+        {% if link.current %}
+          aria-current="page"
+        {% endif %}
+      >
+        {{- shop_all_label | escape -}}
+      </a>
+
+      {%- for childlink in link.links -%}
+        {%- if childlink.links != blank -%}
+          {%- assign heading_id = item_id | append: '-' | append: forloop.index -%}
+          <div class="menu-drawer-campaign__group">
+            <span
+              id="{{ heading_id }}"
+              class="menu-drawer-campaign__heading"
+            >
+              {{- childlink.title | escape -}}
+            </span>
+            <ul
+              class="menu-drawer-campaign__links list-unstyled"
+              aria-labelledby="{{ heading_id }}"
+            >
+              {%- for grandchildlink in childlink.links -%}
+                <li>
+                  <a
+                    href="{{ grandchildlink.url }}"
+                    class="menu-drawer-campaign__link"
+                    {% if grandchildlink.current %}
+                      aria-current="page"
+                    {% endif %}
+                  >
+                    {{- grandchildlink.title | escape -}}
+                  </a>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- else -%}
+          <a
+            href="{{ childlink.url }}"
+            class="menu-drawer-campaign__heading menu-drawer-campaign__heading--link"
+            {% if childlink.current %}
+              aria-current="page"
+            {% endif %}
+          >
+            {{- childlink.title | escape -}}
+          </a>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if promo != blank -%}
+        <div class="menu-drawer-campaign__promo">{{ promo }}</div>
+      {%- endif -%}
+    </div>
+  </details>
+{%- endcapture -%}
+
+{% render 'accordion-custom-component', children: accordion_children %}
+
+{% stylesheet %}
+  .menu-drawer-campaign {
+    --menu-drawer-campaign-muted: rgb(var(--color-foreground-rgb) / 0.65);
+  }
+
+  .menu-drawer-campaign__content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-block: 4px 28px;
+  }
+
+  .menu-drawer-campaign__group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-drawer-campaign__heading {
+    padding-block: 6px;
+    font-family: var(--font-subheading--family);
+    font-style: var(--font-subheading--style);
+    font-weight: var(--font-subheading--weight);
+    font-size: 0.75rem;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--menu-drawer-campaign-muted);
+  }
+
+  /* Linked headings and links keep a 44px touch target */
+  .menu-drawer-campaign__heading--link,
+  .menu-drawer-campaign__link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    text-decoration: none;
+  }
+
+  .menu-drawer-campaign__heading--link:hover {
+    color: var(--color-foreground);
+  }
+
+  .menu-drawer-campaign__link {
+    font-family: var(--font-body--family);
+    font-style: var(--font-body--style);
+    font-weight: var(--font-body--weight);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-foreground);
+    overflow-wrap: anywhere;
+
+    &:hover {
+      color: var(--color-foreground);
+    }
+  }
+
+  .menu-drawer-campaign__link--all {
+    align-self: flex-start;
+    font-family: var(--font-subheading--family);
+    font-style: var(--font-subheading--style);
+    font-weight: var(--font-subheading--weight);
+    line-height: 1.4;
+    text-decoration: underline;
+    text-underline-position: from-font;
+  }
+
+  .menu-drawer-campaign__promo {
+    padding-block-start: 4px;
+  }
+{% endstylesheet %}

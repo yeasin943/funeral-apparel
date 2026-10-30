@@ -65,6 +65,9 @@
 {% stylesheet %}
   .carousel-content slideshow-slides {
     --slideshow-gap: var(--carousel-gap);
+    @media(max-width: 768px) {
+      --slideshow-gap: 12px;
+    }
   }
 
   .carousel-content slideshow-slides > .card {

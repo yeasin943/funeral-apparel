@@ -1,6 +1,12 @@
+{% comment %}
+  Section contract.
+  Renders the search palette results for a typed query, or the recently viewed products when
+  predictive-search.js requests products by ID. Fetched through the Section Rendering API and
+  morphed into the search modal; never placed on a page.
+  @example
+  <!-- /search/suggest?q=her&section_id=predictive-search -->
+{% endcomment %}
 
-
-{% render 'pills-styles' %}
 {% render 'predictive-search-styles' %}
 
 {%- if predictive_search.performed or search.performed -%}
@@ -10,29 +16,31 @@
     role="listbox"
     aria-label="{{ 'content.search_results_label' | t }}"
     data-transition-container
-    style="--color-shadow: rgb(var(--color-foreground-rgb) / var(--opacity-10-25));"
   >
     <div
       class="predictive-search-results__inner"
       data-search-results
+      data-scope="all"
     >
       {% if predictive_search.performed %}
-        {% assign search_results_count = predictive_search.resources.products.size
-          | plus: predictive_search.resources.pages.size
-          | plus: predictive_search.resources.articles.size
-          | plus: predictive_search.resources.collections.size
+        {% liquid
+          assign products = predictive_search.resources.products
+          assign collections = predictive_search.resources.collections
+          assign pages = predictive_search.resources.pages
+          assign articles = predictive_search.resources.articles
+          assign queries = predictive_search.resources.queries
+          assign search_results_count = products.size | plus: collections.size | plus: pages.size | plus: articles.size
         %}
       {% else %}
         {% assign search_results_count = search.results_count %}
       {% endif %}
-
       <div
         class="visually-hidden"
         role="status"
       >
         {%- if predictive_search.performed and search_results_count > 0 -%}
           {{ 'accessibility.search_results_count' | t: count: search_results_count, query: predictive_search.terms }}
-        {%- elsif predictive_search.performed and predictive_search.resources.queries.size > 0 -%}
+        {%- elsif predictive_search.performed and queries.size > 0 -%}
           {{- 'accessibility.search_suggestions_available' | t: query: predictive_search.terms -}}
         {%- elsif predictive_search.performed -%}
           {{ 'accessibility.search_results_no_results' | t: query: predictive_search.terms }}
@@ -40,78 +48,168 @@
       </div>
 
       {% if predictive_search.performed %}
-        {% if predictive_search.resources.queries.size > 0 %}
-          <ul
-            class="predictive-search-results__list predictive-search-results__wrapper predictive-search-results__wrapper-queries list-unstyled"
-          >
-            {%- for resource in predictive_search.resources.queries -%}
-              <li
-                class="predictive-search-results__card--query"
-                ref="resultsItems[]"
-                on:keydown="/onSearchKeyDown"
-              >
-                <a
-                  class="pills__pill predictive-search-results__pill"
-                  href="{{ resource.url }}"
-                  aria-label="{{ resource.text }}"
-                >
-                  <span>
-                    {{ resource.styled_text }}
-                  </span>
-                </a>
-              </li>
-            {% endfor %}
-          </ul>
-        {% endif %}
+        {%- capture search_url -%}
+          {{ routes.search_url }}?q={{ predictive_search.terms | url_encode }}&options%5Bprefix%5D=last
+        {%- endcapture -%}
 
         {%- if search_results_count > 0 -%}
-          {% if predictive_search.resources.products.size > 0 %}
-            {%- liquid
-              assign title = 'content.search_results_resource_products' | t
-              assign products = predictive_search.resources.products
-              render 'predictive-search-products-list', title: title, products: products
-            -%}
+          <div class="search-palette__toolbar">
+            <div
+              class="search-palette__scopes"
+              role="group"
+              aria-label="{{ 'accessibility.search_results_filter' | t }}"
+            >
+              {% render 'search-palette-scope',
+                scope: 'all',
+                label: 'content.search_results_all',
+                count: search_results_count
+              %}
+              {% render 'search-palette-scope',
+                scope: 'products',
+                label: 'content.search_results_resource_products',
+                count: products.size
+              %}
+              {% render 'search-palette-scope',
+                scope: 'collections',
+                label: 'content.search_results_resource_collections',
+                count: collections.size
+              %}
+              {% render 'search-palette-scope',
+                scope: 'pages',
+                label: 'content.search_results_resource_pages',
+                count: pages.size
+              %}
+              {% render 'search-palette-scope',
+                scope: 'articles',
+                label: 'content.search_results_resource_articles',
+                count: articles.size
+              %}
+            </div>
+            <a
+              href="{{ search_url }}"
+              class="search-palette__text-link"
+            >
+              {{- 'content.search_results_view_all' | t -}}
+            </a>
+          </div>
+        {%- endif -%}
+
+        <div class="search-palette__results">
+          {% if queries.size > 0 %}
+            <div class="search-palette__group search-palette__group--queries">
+              <div class="search-palette__label-row">
+                <h4 class="search-palette__label">{{ 'content.search_results_suggestions' | t }}</h4>
+              </div>
+              <ul class="predictive-search-results__wrapper-queries search-palette__queries list-unstyled">
+                {%- for resource in queries -%}
+                  <li
+                    class="predictive-search-results__card--query"
+                    ref="resultsItems[]"
+                    on:keydown="/onSearchKeyDown"
+                  >
+                    <a
+                      class="search-palette__query"
+                      href="{{ resource.url }}"
+                      aria-label="{{ resource.text | escape }}"
+                    >
+                      {{- resource.styled_text -}}
+                    </a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
           {% endif %}
 
-          {% if predictive_search.resources.collections.size > 0 %}
-            {% assign resource_title = 'content.search_results_resource_collections' | t %}
+          {%- if search_results_count > 0 -%}
+            {% if products.size > 0 %}
+              {%- assign products_shown = products.size | at_most: 3 -%}
+              <div
+                class="search-palette__group"
+                data-scope-group="products"
+              >
+                <div class="search-palette__label-row">
+                  <h4 class="search-palette__label">{{ 'content.search_results_resource_products' | t }}</h4>
+                  <span class="search-palette__label search-palette__count">
+                    {{- 'content.search_results_shown_count' | t: shown: products_shown, total: products.size -}}
+                  </span>
+                </div>
+                <ul class="search-palette__products predictive-search-results__wrapper-products list-unstyled">
+                  {%- for product in products -%}
+                    {% render 'search-palette-product', product: product, ref: 'resultsItems[]' %}
+                  {%- endfor -%}
+                </ul>
+              </div>
+            {% endif %}
 
-            {% render 'predictive-search-resource-carousel',
-              title: resource_title,
-              resource_type: 'collection',
-              resources: predictive_search.resources.collections
-            %}
-          {% endif %}
+            {% if collections.size > 0 %}
+              <div
+                class="search-palette__group"
+                data-scope-group="collections"
+              >
+                <div class="search-palette__label-row">
+                  <h4 class="search-palette__label">{{ 'content.search_results_resource_collections' | t }}</h4>
+                </div>
+                <ul class="search-palette__collections predictive-search-results__list list-unstyled">
+                  {%- for collection in collections -%}
+                    {% render 'search-palette-resource', resource: collection, resource_type: 'collection' %}
+                  {%- endfor -%}
+                </ul>
+              </div>
+            {% endif %}
 
-          {% if predictive_search.resources.pages.size > 0 %}
-            {% assign resource_title = 'content.search_results_resource_pages' | t %}
+            {% if pages.size > 0 %}
+              <div
+                class="search-palette__group"
+                data-scope-group="pages"
+              >
+                <div class="search-palette__label-row">
+                  <h4 class="search-palette__label">{{ 'content.search_results_resource_pages' | t }}</h4>
+                </div>
+                <ul class="search-palette__rows predictive-search-results__list list-unstyled">
+                  {%- for page in pages -%}
+                    {% render 'search-palette-resource', resource: page, resource_type: 'page' %}
+                  {%- endfor -%}
+                </ul>
+              </div>
+            {% endif %}
 
-            {% render 'predictive-search-resource-carousel',
-              title: resource_title,
-              resource_type: 'page',
-              resources: predictive_search.resources.pages
-            %}
-          {% endif %}
+            {% if articles.size > 0 %}
+              <div
+                class="search-palette__group"
+                data-scope-group="articles"
+              >
+                <div class="search-palette__label-row">
+                  <h4 class="search-palette__label">{{ 'content.search_results_resource_articles' | t }}</h4>
+                </div>
+                <ul class="search-palette__rows predictive-search-results__list list-unstyled">
+                  {%- for article in articles -%}
+                    {% render 'search-palette-resource', resource: article, resource_type: 'article' %}
+                  {%- endfor -%}
+                </ul>
+              </div>
+            {% endif %}
+          {%- elsif queries.size == 0 -%}
+            <p class="predictive-search-results__no-results">
+              {{ 'content.search_results_no_results' | t: terms: predictive_search.terms }}
+            </p>
+          {%- endif -%}
+        </div>
 
-          {% if predictive_search.resources.articles.size > 0 %}
-            {% assign resource_title = 'content.search_results_resource_articles' | t %}
-
-            {% render 'predictive-search-resource-carousel',
-              title: resource_title,
-              resource_type: 'article',
-              resources: predictive_search.resources.articles
-            %}
-          {% endif %}
-        {%- elsif predictive_search.resources.queries.size == 0 -%}
-          <p class="predictive-search-results__no-results">
-            {{ 'content.search_results_no_results' | t: terms: predictive_search.terms }}
-          </p>
-        {% endif %}
+        {%- if search_results_count > 0 -%}
+          <a
+            href="{{ search_url }}"
+            class="search-palette__view-all-bar"
+          >
+            <span>{{ 'content.search_results_view_all_count' | t: count: search_results_count }}</span>
+            <span class="search-palette__chevron">
+              {{- 'icon-chevron-right-line.svg' | inline_asset_content -}}
+            </span>
+          </a>
+        {%- endif -%}
       {% else %}
         {%- liquid
           assign title = 'content.recently_viewed_products' | t
           assign products = search.results
-
           comment
             Searching for recently viewed products by id doesn't preserve the order of the products.
             To work around this, we get the product ids into an array then use that to reorder them.
@@ -123,30 +221,11 @@
         -%}
       {% endif %}
 
-      {% if predictive_search.performed %}
-        {%- if search_results_count > 0 -%}
-          {% assign total_results = predictive_search.resources.products.size
-            | plus: predictive_search.resources.collections.size
-            | plus: predictive_search.resources.pages.size
-            | plus: predictive_search.resources.articles.size
-          %}
-          {% assign single_result_url = null %}
-          {% if total_results == 1 %}
-            {% if predictive_search.resources.products.size == 1 %}
-              {% assign single_result_url = predictive_search.resources.products.first.url %}
-            {% elsif predictive_search.resources.collections.size == 1 %}
-              {% assign single_result_url = predictive_search.resources.collections.first.url %}
-            {% elsif predictive_search.resources.pages.size == 1 %}
-              {% assign single_result_url = predictive_search.resources.pages.first.url %}
-            {% elsif predictive_search.resources.articles.size == 1 %}
-              {% assign single_result_url = predictive_search.resources.articles.first.url %}
-            {% endif %}
-          {% endif %}
-
-          {% if single_result_url %}
-            <div data-single-result-url="{{ single_result_url }}"></div>
-          {% endif %}
-        {% endif %}
+      {% if predictive_search.performed and search_results_count == 1 %}
+        {% liquid
+          assign single_result_url = products.first.url | default: collections.first.url | default: pages.first.url | default: articles.first.url
+        %}
+        <div data-single-result-url="{{ single_result_url }}"></div>
       {% endif %}
     </div>
   </div>

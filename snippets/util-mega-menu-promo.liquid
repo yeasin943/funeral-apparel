@@ -1,0 +1,22 @@
+{%- doc -%}
+  Outputs the `_mega-menu-promo` markup that belongs to one top-level menu item, or nothing.
+  Promos are rendered once by `_header-menu` and delimited by comment markers keyed on the
+  handle of their "Menu item" setting.
+
+  @param {string} promos - Captured `content_for 'blocks'` output of the header menu block.
+  @param {string} handle - Handle of the top-level menu link, e.g. `mens`.
+
+  @example
+  {% capture promo %}{% render 'util-mega-menu-promo', promos: mega_menu_promos, handle: link.handle %}{% endcapture %}
+{%- enddoc -%}
+
+{%- liquid
+  assign start_marker = '<!--mega-menu-promo:' | append: handle | append: '-->'
+
+  if promos contains start_marker
+    # The leading sentinel keeps the text before the first marker at index 0.
+    assign promo_parts = '|' | append: promos | split: start_marker
+    assign promo = promo_parts[1] | split: '<!--/mega-menu-promo-->' | first
+    echo promo
+  endif
+-%}

@@ -34,7 +34,6 @@
         "step": 1,
         "unit": "px",
         "default": 36,
-        "visible_if": "{{ settings.logo != blank or settings.logo_inverse != blank }}",
         "info": "t:info.logo_height"
       },
       {
@@ -46,7 +45,6 @@
         "step": 1,
         "unit": "px",
         "default": 28,
-        "visible_if": "{{ settings.logo != blank or settings.logo_inverse != blank }}",
         "info": "t:info.logo_height"
       },
       {
@@ -1523,7 +1521,6 @@
         "id": "auto_open_cart_drawer",
         "label": "t:settings.auto_open_cart_drawer",
         "default": false,
-        "visible_if": "{{ settings.cart_type == 'drawer' }}"
       },
       {
         "type": "header",
@@ -1540,7 +1537,6 @@
         "id": "cart_note_open_by_default",
         "label": "t:settings.seller_note_open_by_default",
         "default": false,
-        "visible_if": "{{ settings.show_cart_note == true }}"
       },
       {
         "type": "checkbox",
@@ -1596,7 +1592,6 @@
         "unit": "px",
         "label": "t:settings.border_width",
         "default": 1,
-        "visible_if": "{{ settings.cart_thumbnail_border != 'none' }}"
       },
       {
         "type": "range",
@@ -1607,7 +1602,6 @@
         "unit": "%",
         "label": "t:settings.border_opacity",
         "default": 50,
-        "visible_if": "{{ settings.cart_thumbnail_border != 'none' }}"
       },
       {
         "type": "range",
@@ -1618,6 +1612,221 @@
         "step": 1,
         "unit": "px",
         "default": 0
+      }
+    ]
+  },
+  {
+    "name": "Cart drawer",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Applies when Cart type is set to Drawer."
+      },
+      {
+        "type": "header",
+        "content": "Announcement bar"
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_drawer_promo_enabled",
+        "label": "Show announcement bar",
+        "default": true
+      },
+      {
+        "type": "inline_richtext",
+        "id": "cart_drawer_promo_text",
+        "label": "Text",
+        "default": "<strong>Halloween sale</strong>: 25% off everything. Ends Oct 31.",
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_drawer_promo_show_filled",
+        "label": "Also show when cart has items",
+        "default": false,
+      },
+      {
+        "type": "color",
+        "id": "cart_drawer_promo_background",
+        "label": "Background",
+        "default": "#000000",
+      },
+      {
+        "type": "color",
+        "id": "cart_drawer_promo_text_color",
+        "label": "Text color",
+        "default": "#ffffff",
+      },
+      {
+        "type": "header",
+        "content": "Empty cart"
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_drawer_empty_icon",
+        "label": "Show bag icon",
+        "default": true
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_empty_heading",
+        "label": "Heading",
+        "default": "Your cart is empty"
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_empty_subtext",
+        "label": "Subheading",
+        "default": "Not sure where to start? Pick a side."
+      },
+      {
+        "type": "image_picker",
+        "id": "cart_drawer_tile_1_image",
+        "label": "Tile 1 image"
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_tile_1_label",
+        "label": "Tile 1 label",
+        "default": "Shop men"
+      },
+      {
+        "type": "url",
+        "id": "cart_drawer_tile_1_link",
+        "label": "Tile 1 link"
+      },
+      {
+        "type": "image_picker",
+        "id": "cart_drawer_tile_2_image",
+        "label": "Tile 2 image"
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_tile_2_label",
+        "label": "Tile 2 label",
+        "default": "Shop women"
+      },
+      {
+        "type": "url",
+        "id": "cart_drawer_tile_2_link",
+        "label": "Tile 2 link"
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_browse_heading",
+        "label": "Browse links heading",
+        "default": "More to browse"
+      },
+      {
+        "type": "link_list",
+        "id": "cart_drawer_browse_menu",
+        "label": "Browse links menu"
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_browse_highlight",
+        "label": "Highlighted link title",
+        "default": "Sale",
+        "info": "A menu link with this exact title uses the sale accent color."
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_empty_button_label",
+        "label": "Button label",
+        "default": "Continue shopping",
+        "info": "Links to the Empty cart button link set in Cart settings."
+      },
+      {
+        "type": "header",
+        "content": "Recommendations"
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_drawer_recs_enabled",
+        "label": "Show recommendations",
+        "default": true
+      },
+      {
+        "type": "collection",
+        "id": "cart_drawer_recs_collection",
+        "label": "Collection",
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_recs_heading",
+        "label": "Heading",
+        "default": "You May Also Like",
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_recs_subheading",
+        "label": "Subheading",
+      },
+      {
+        "type": "range",
+        "id": "cart_drawer_recs_count",
+        "label": "Products to show",
+        "min": 2,
+        "max": 6,
+        "step": 1,
+        "default": 3,
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_recs_option_name",
+        "label": "Quick-add option name",
+        "default": "Size",
+        "info": "Option shown as buttons on the card hover picker.",
+      },
+      {
+        "type": "header",
+        "content": "Trust bar"
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_drawer_trust_enabled",
+        "label": "Show trust bar",
+        "default": true
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_trust_1",
+        "label": "Item 1",
+        "default": "Secure checkout",
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_trust_2",
+        "label": "Item 2",
+        "default": "30-day returns",
+      },
+      {
+        "type": "text",
+        "id": "cart_drawer_trust_3",
+        "label": "Item 3",
+        "default": "14-day exchanges",
+      },
+      {
+        "type": "color",
+        "id": "cart_drawer_trust_background",
+        "label": "Background",
+        "default": "#000000",
+      },
+      {
+        "type": "color",
+        "id": "cart_drawer_trust_text_color",
+        "label": "Text color",
+        "default": "#ffffff",
+      },
+      {
+        "type": "header",
+        "content": "Colors"
+      },
+      {
+        "type": "color",
+        "id": "cart_drawer_accent_color",
+        "label": "Sale accent",
+        "default": "#b3121f",
+        "info": "Used for the discount badge, sale prices and savings."
       }
     ]
   },
@@ -1807,7 +2016,6 @@
         "label": "t:settings.shadow_color",
         "default": "{{ settings.color_palette.foreground }}",
         "alpha": true,
-        "visible_if": "{{ settings.popover_drop_shadow == true }}"
       }
     ]
   },
@@ -1858,21 +2066,18 @@
         "id": "mobile_quick_add",
         "label": "t:settings.mobile_quick_add",
         "default": false,
-        "visible_if": "{{ settings.quick_add == true }}"
       },
       {
         "type": "color",
         "id": "quick_add_background",
         "label": "t:settings.background",
         "default": "{{ settings.color_palette.background }}",
-        "visible_if": "{{ settings.quick_add == true }}"
       },
       {
         "type": "color",
         "id": "quick_add_text",
         "label": "t:settings.text",
         "default": "{{ settings.color_palette.foreground }}",
-        "visible_if": "{{ settings.quick_add == true }}"
       },
       {
         "type": "header",
@@ -1900,6 +2105,28 @@
         "id": "empty_state_collection",
         "label": "t:settings.empty_state_collection",
         "info": "t:settings.empty_state_collection_info"
+      },
+      {
+        "type": "header",
+        "content": "t:content.search_result_types"
+      },
+      {
+        "type": "checkbox",
+        "id": "search_show_collections",
+        "label": "t:settings.search_show_collections",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "search_show_pages",
+        "label": "t:settings.search_show_pages",
+        "default": false
+      },
+      {
+        "type": "checkbox",
+        "id": "search_show_articles",
+        "label": "t:settings.search_show_articles",
+        "default": false
       },
       {
         "type": "header",
@@ -2007,7 +2234,6 @@
         "unit": "px",
         "label": "t:settings.border_width",
         "default": 1,
-        "visible_if": "{{ settings.variant_swatch_border_style != 'none' }}"
       },
       {
         "type": "range",
@@ -2018,7 +2244,6 @@
         "unit": "%",
         "label": "t:settings.border_opacity",
         "default": 10,
-        "visible_if": "{{ settings.variant_swatch_border_style != 'none' }}"
       }
     ]
   },

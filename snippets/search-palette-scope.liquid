@@ -1,0 +1,25 @@
+{%- doc -%}
+  Renders one scope pill of the search palette toolbar. The pill toggles which result groups
+  show through `setScope` on the predictive search component. Renders nothing when its
+  scope has no results, except for `all`.
+
+  @param {string} scope - `all`, `products`, `collections`, `pages`, or `articles`.
+  @param {string} label - Translation key for the pill label.
+  @param {number} count - Number of results in this scope.
+
+  @example
+  {% render 'search-palette-scope', scope: 'products', label: 'content.search_results_resource_products', count: 9 %}
+{%- enddoc -%}
+
+{%- if scope == 'all' or count > 0 -%}
+  <button
+    type="button"
+    class="search-palette__scope button-unstyled"
+    data-scope="{{ scope }}"
+    aria-pressed="{% if scope == 'all' %}true{% else %}false{% endif %}"
+    on:click="/setScope"
+  >
+    <span>{{ label | t }}</span>
+    <span class="search-palette__scope-count">{{ count }}</span>
+  </button>
+{%- endif -%}

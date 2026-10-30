@@ -155,7 +155,9 @@
     "disclosures": "Disclosures",
     "disclosures_metafield_content": "Required safety warnings and regulatory disclosures for this product.",
     "app_required_for_ratings": "An app is required for product ratings. [Learn more](https:\/\/help.shopify.com\/manual\/apps)",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "mega_menu_promo_paragraph": "Add a Mega menu promo block for each top-level item to show its campaign image in the menu.",
+    "search_result_types": "Search results"
   },
   "html_defaults": {
     "join_our_email_list": "<h2>Join our email list<\/h2>",
@@ -242,7 +244,9 @@
     "video_autoplay": "Videos will be muted by default",
     "video_external": "Use a YouTube or Vimeo URL",
     "pills_usage": "Used for applied filters, discount codes, and search suggestions",
-    "media_type_info": "Features are populated from your menu links"
+    "media_type_info": "Features are populated from your menu links",
+    "mega_menu_promo_menu_item": "Title of the top-level menu item this promo belongs to, e.g. Mens",
+    "highlight_menu_item": "Title of the top-level menu item to show in the highlight color, e.g. Sale"
   },
   "names": {
     "column": "Column",
@@ -405,7 +409,8 @@
     "view_all_button": "View all",
     "disclosures": "Disclosures",
     "pills": "Pills",
-    "comparison_slider": "Comparison slider"
+    "comparison_slider": "Comparison slider",
+    "mega_menu_promo": "Mega menu promo"
   },
   "options": {
     "above_carousel": "Above carousel",
@@ -687,7 +692,8 @@
     "wide": "Wide",
     "youtube": "YouTube",
     "with_hints": "With hints",
-    "below_media": "Below media"
+    "below_media": "Below media",
+    "campaign": "Campaign"
   },
   "settings": {
     "accordion": "Accordion",
@@ -1105,7 +1111,15 @@
     "top_row_background": "Top row background",
     "top_row_text": "Top row text",
     "bottom_row_background": "Bottom row background",
-    "bottom_row_text": "Bottom row text"
+    "bottom_row_text": "Bottom row text",
+    "menu_item": "Menu item",
+    "eyebrow": "Eyebrow",
+    "link_label": "Link label",
+    "highlight_menu_item": "Highlighted menu item",
+    "highlight_color": "Highlight color",
+    "search_show_collections": "Show collections",
+    "search_show_pages": "Show pages",
+    "search_show_articles": "Show blog posts"
   },
   "text_defaults": {
     "accordion_heading": "Accordion heading",

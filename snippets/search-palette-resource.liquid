@@ -1,0 +1,49 @@
+{%- doc -%}
+  Renders one collection, page, or article in the search palette. Collections are image
+  cards with the name inside the image on desktop and thumbnail rows on mobile; pages and
+  articles are text rows.
+
+  @param {object} resource - The collection, page, or article.
+  @param {string} resource_type - `collection`, `page`, or `article`.
+
+  @example
+  {% render 'search-palette-resource', resource: collection, resource_type: 'collection' %}
+{%- enddoc -%}
+
+{%- liquid
+  assign image = null
+  if resource_type == 'collection'
+    assign image = resource.featured_image
+  endif
+-%}
+
+<li
+  class="predictive-search-results__card search-palette__item"
+  ref="resultsItems[]"
+>
+  <a
+    href="{{ resource.url }}"
+    class="search-palette-resource search-palette-resource--{{ resource_type }}"
+  >
+    {%- if resource_type == 'collection' -%}
+      <span class="search-palette-resource__media">
+        {%- if image != blank -%}
+          {{
+            image
+            | image_url: width: 640
+            | image_tag:
+              widths: '96, 320, 480, 640',
+              sizes: '(min-width: 750px) 310px, 48px',
+              loading: 'lazy',
+              alt: '',
+              class: 'search-palette-resource__image'
+          }}
+        {%- endif -%}
+      </span>
+    {%- endif -%}
+    <span class="search-palette-resource__title">{{ resource.title | escape }}</span>
+    <span class="search-palette__chevron">
+      {{- 'icon-chevron-right-line.svg' | inline_asset_content -}}
+    </span>
+  </a>
+</li>

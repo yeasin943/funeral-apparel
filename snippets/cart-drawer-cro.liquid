@@ -1,0 +1,294 @@
+{%- liquid
+  assign render_wrapper = render_wrapper | default: true, allow_false: true
+
+  assign promo_enabled = false
+  if settings.cart_drawer_promo_enabled and settings.cart_drawer_promo_text != blank
+    assign promo_enabled = true
+  endif
+
+  assign show_promo_filled = false
+  if promo_enabled and settings.cart_drawer_promo_show_filled
+    assign show_promo_filled = true
+  endif
+
+  if cart.empty?
+    assign cart_drawer_title = 'cart_drawer.title_empty' | t
+  else
+    assign cart_drawer_title = 'cart_drawer.title' | t
+  endif
+-%}
+
+{%- if settings.cart_type == 'drawer' and template.name != 'cart' -%}
+  {%- if render_wrapper -%}
+    <div
+      id="shopify-section-cart-drawer-section"
+      class="shopify-section"
+    >
+  {%- endif -%}
+
+  <script
+    type="module"
+    src="{{ 'cart-drawer.js' | asset_url }}"
+    fetchpriority="low"
+  ></script>
+  <script
+    type="module"
+    src="{{ 'component-cart-items.js' | asset_url }}"
+    fetchpriority="low"
+  ></script>
+  <script
+    type="module"
+    src="{{ 'component-cart-quantity-selector.js' | asset_url }}"
+    fetchpriority="low"
+  ></script>
+  <script
+    type="module"
+    src="{{ 'cart-drawer-cro.js' | asset_url }}"
+    fetchpriority="low"
+  ></script>
+
+  {%- capture promo_bar -%}
+    <div class="cart-drawer-cro__promo">
+      <p>{{ settings.cart_drawer_promo_text }}</p>
+    </div>
+  {%- endcapture -%}
+
+  {%- capture empty_content -%}
+    <div
+      class="cart-drawer-cro__body cart-drawer-cro__body--empty"
+      data-cart-drawer-empty
+    >
+      {%- if promo_enabled -%}
+        {{ promo_bar }}
+      {%- endif -%}
+      {% render 'cart-drawer-cro-empty' %}
+    </div>
+  {%- endcapture -%}
+
+  {%- capture filled_content -%}
+    <div class="cart-drawer-cro__body">
+      {%- if show_promo_filled -%}
+        {{ promo_bar }}
+      {%- endif -%}
+      <div class="cart-drawer-cro__scroll cart-drawer__content">
+        <div class="cart-drawer-cro__main">
+          {% render 'cart-drawer-cro-items' %}
+          {% render 'cart-drawer-cro-recs' %}
+        </div>
+        <div class="cart-drawer-cro__footer cart-drawer__summary">
+          {% render 'cart-drawer-cro-summary' %}
+        </div>
+      </div>
+    </div>
+  {%- endcapture -%}
+
+   <theme-drawer
+    id="cart-drawer"
+    modal
+    no-persist
+    data-skip-node-update
+  >
+    <dialog
+      ref="panel"
+      class="theme-drawer__dialog color-custom-drawer cart-drawer-cro"
+      aria-labelledby="cart-drawer-title"
+      cart-summary-sticky="true"
+      style="
+        --cd-promo-bg: {{ settings.cart_drawer_promo_background }};
+        --cd-promo-fg: {{ settings.cart_drawer_promo_text_color }};
+        --cd-trust-bg: {{ settings.cart_drawer_trust_background }};
+        --cd-trust-fg: {{ settings.cart_drawer_trust_text_color }};
+        --cd-accent: {{ settings.cart_drawer_accent_color }};
+      "
+    >
+      <cart-drawer-component
+        {% if settings.auto_open_cart_drawer %}
+          auto-open
+        {% endif %}
+      >
+        <template id="empty-cart-template">
+          {{ empty_content }}
+        </template>
+
+        <div
+          class="cart-drawer-cro__inner{% if cart.empty? %} cart-drawer--empty{% endif %}"
+          data-hydration-key="cart-drawer-inner"
+        >
+          {% render 'theme-drawer-header',
+            title: cart_drawer_title,
+            drawer_id: 'cart-drawer',
+            heading_id: 'cart-drawer-title'
+          %}
+
+          {%- capture cart_items_children -%}
+            {%- if cart.empty? -%}
+              {{ empty_content }}
+            {%- else -%}
+              {{ filled_content }}
+            {%- endif -%}
+          {%- endcapture -%}
+          {% render 'cart-items-component',
+            children: cart_items_children,
+            is_drawer: true,
+            section_id: 'cart-drawer-section'
+          %}
+
+          {%- if settings.cart_drawer_trust_enabled -%}
+            <ul
+              class="cart-drawer-cro__trust list-unstyled"
+              role="list"
+            >
+              {%- for i in (1..3) -%}
+                {%- assign trust_key = 'cart_drawer_trust_' | append: i -%}
+                {%- assign trust_text = settings[trust_key] -%}
+                {%- if trust_text != blank -%}
+                  <li class="cart-drawer-cro__trust-item">
+                    {%- case i -%}
+                      {%- when 1 -%}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      {%- when 2 -%}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+                      {%- else -%}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m17 3 4 4-4 4"/><path d="M3 7h18"/><path d="m7 21-4-4 4-4"/><path d="M21 17H3"/></svg>
+                    {%- endcase -%}
+                    <span>{{ trust_text }}</span>
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+        </div>
+      </cart-drawer-component>
+    </dialog>
+  </theme-drawer>
+
+  {%- if render_wrapper -%}
+    </div>
+  {%- endif -%}
+{%- endif -%}
+
+{% stylesheet %}
+  cart-drawer-component {
+    display: contents;
+  }
+
+  .cart-drawer-cro {
+    --cd-gutter: var(--theme-drawer-padding);
+    --cd-divider: rgb(var(--color-foreground-rgb) / var(--opacity-10-25));
+    --style-border-radius-buttons-primary: 0px;
+    --style-border-radius-buttons-secondary: 0px;
+    --style-border-radius-inputs: 0px;
+  }
+
+  .cart-drawer-cro__inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .cart-drawer-cro__inner > .theme-drawer__header {
+    flex-shrink: 0;
+    border-block-end: 1px solid var(--cd-divider);
+  }
+
+  .cart-drawer-cro .theme-drawer__title {
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .cart-drawer-cro__inner > .cart-items-component {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+
+  .cart-drawer-cro .cart-items-disabled {
+    pointer-events: none;
+  }
+
+  .cart-drawer-cro__body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .cart-drawer-cro__promo {
+    flex-shrink: 0;
+    padding: var(--padding-sm) var(--cd-gutter);
+    background-color: var(--cd-promo-bg);
+    color: var(--cd-promo-fg);
+    font-size: var(--font-size--sm);
+    text-align: center;
+  }
+
+  .cart-drawer-cro__promo p {
+    margin: 0;
+  }
+
+  .cart-drawer-cro__scroll {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .cart-drawer-cro__body--empty .cart-drawer-cro__scroll {
+    padding: var(--padding-lg) var(--cd-gutter);
+  }
+
+  .cart-drawer-cro__main {
+    padding: var(--padding-lg) var(--cd-gutter);
+  }
+
+  .cart-drawer-cro .cart-drawer-cro__footer {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--gap-md);
+    margin-top: auto;
+    padding: var(--padding-lg) var(--cd-gutter);
+    border-block-start: 1px solid var(--cd-divider);
+    background-color: var(--color-background);
+    mask-image: none;
+  }
+
+  .cart-drawer-cro .cart-drawer__summary {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  .cart-drawer-cro[cart-summary-sticky='false'] .cart-drawer__summary {
+    position: static;
+  }
+
+  .cart-drawer-cro__trust {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--gap-xs) var(--gap-xl);
+    margin: 0;
+    padding: var(--padding-md) var(--cd-gutter);
+    background-color: var(--cd-trust-bg);
+    color: var(--cd-trust-fg);
+    font-size: var(--font-size--xs);
+  }
+
+  .cart-drawer-cro__trust-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-2xs);
+  }
+
+  .cart-drawer-cro__trust-item svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+{% endstylesheet %}

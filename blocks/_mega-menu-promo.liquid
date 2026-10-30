@@ -1,0 +1,214 @@
+{%- doc -%}
+  Renders the campaign card for one top-level menu item: on the right of its desktop mega menu
+  panel and at the end of its mobile drawer accordion. `_header-menu` captures every promo once
+  and places each by the handle in its comment markers, so keep the markers around the markup.
+{%- enddoc -%}
+
+{%- liquid
+  assign promo_handle = block.settings.menu_item | handleize
+  assign link = block.settings.link
+-%}
+
+{%- if promo_handle != blank -%}
+  <!--mega-menu-promo:{{ promo_handle }}-->
+  <div class="mega-menu-promo" {{ block.shopify_attributes }}>
+    {%- capture promo_media -%}
+      {%- if block.settings.image != blank -%}
+        {{
+          block.settings.image
+          | image_url: width: 1120
+          | image_tag:
+            widths: '280, 400, 560, 800, 1120',
+            sizes: '(min-width: 990px) 560px, (min-width: 750px) 45vw, min(100vw, 25rem)',
+            loading: 'lazy',
+            class: 'mega-menu-promo__image'
+        }}
+      {%- else -%}
+        {{ 'image' | placeholder_svg_tag: 'mega-menu-promo__image mega-menu-promo__image--placeholder' }}
+      {%- endif -%}
+    {%- endcapture -%}
+
+    {%- if link != blank -%}
+      {%- comment -%} The caption link is the accessible target; the image repeats it for pointers. {%- endcomment -%}
+      <a
+        href="{{ link }}"
+        class="mega-menu-promo__media"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        {{- promo_media -}}
+      </a>
+    {%- else -%}
+      <div class="mega-menu-promo__media">{{ promo_media }}</div>
+    {%- endif -%}
+
+    {%- if block.settings.eyebrow != blank
+      or block.settings.heading != blank
+      or block.settings.link_label != blank
+    -%}
+      <div class="mega-menu-promo__caption">
+        {%- if block.settings.eyebrow != blank or block.settings.heading != blank -%}
+          <div class="mega-menu-promo__text">
+            {%- if block.settings.eyebrow != blank -%}
+              <p class="mega-menu-promo__eyebrow">{{ block.settings.eyebrow | escape }}</p>
+            {%- endif -%}
+            {%- if block.settings.heading != blank -%}
+              <p class="mega-menu-promo__heading">{{ block.settings.heading | escape }}</p>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+        {%- if block.settings.link_label != blank and link != blank -%}
+          <a
+            href="{{ link }}"
+            class="mega-menu-promo__link"
+          >
+            {{- block.settings.link_label | escape -}}
+          </a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+  <!--/mega-menu-promo-->
+{%- endif -%}
+
+{% stylesheet %}
+  .mega-menu-promo {
+    --mega-menu-promo-muted: rgb(var(--color-foreground-rgb) / 0.65);
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .mega-menu-promo__media {
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--menu-image-border-radius, 0);
+    background-color: rgb(var(--color-foreground-rgb) / var(--opacity-5));
+  }
+
+  .mega-menu-promo__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mega-menu-promo__image--placeholder {
+    fill: var(--mega-menu-promo-muted);
+  }
+
+  .mega-menu-promo__caption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--padding-xs) 24px;
+  }
+
+  .mega-menu-promo__text {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 6px;
+    min-width: min(100%, 12rem);
+    text-transform: uppercase;
+  }
+
+  .mega-menu-promo__eyebrow,
+  .mega-menu-promo__heading {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .mega-menu-promo__eyebrow {
+    font-family: var(--font-subheading--family);
+    font-style: var(--font-subheading--style);
+    font-weight: var(--font-subheading--weight);
+    font-size: 0.75rem;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    color: var(--mega-menu-promo-muted);
+  }
+
+  .mega-menu-promo__heading {
+    font-family: var(--font-accent--family);
+    font-style: var(--font-accent--style);
+    font-weight: var(--font-accent--weight);
+    font-size: 1.75rem;
+    line-height: 1.16;
+    letter-spacing: 0.005em;
+    color: var(--color-foreground);
+  }
+
+  .mega-menu-promo__link {
+    flex-shrink: 0;
+    padding-block-end: 4px;
+    border-block-end: 1.5px solid currentColor;
+    font-family: var(--font-accent--family);
+    font-style: var(--font-accent--style);
+    font-weight: var(--font-accent--weight);
+    font-size: 0.875rem;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    color: var(--color-foreground);
+    transition: opacity var(--animation-speed) var(--animation-easing);
+
+    &:hover {
+      color: var(--color-foreground);
+      opacity: var(--opacity-subdued-text);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.mega_menu_promo",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "menu_item",
+      "label": "t:settings.menu_item",
+      "info": "t:info.mega_menu_promo_menu_item"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:settings.image"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "t:settings.eyebrow",
+      "default": "Just dropped"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:settings.heading",
+      "default": "The Tapestry drop"
+    },
+    {
+      "type": "text",
+      "id": "link_label",
+      "label": "t:settings.link_label",
+      "default": "Shop new arrivals"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:settings.link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.mega_menu_promo"
+    }
+  ]
+}
+{% endschema %}

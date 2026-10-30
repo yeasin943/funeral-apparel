@@ -576,6 +576,9 @@ class HeaderMenu extends Component {
    * Preload images that are set to load lazily.
    */
   #preloadImages = () => {
+    // The desktop menu is hidden on mobile, where its panel images would be wasted downloads.
+    if (!this.checkVisibility()) return;
+
     const images = this.querySelectorAll('img[loading="lazy"]');
     images?.forEach((image) => image.removeAttribute('loading'));
   };

@@ -53,6 +53,8 @@ class PredictiveSearchComponent extends Component {
       document.addEventListener('keydown', this.#handleKeyboardShortcut, { signal });
       dialog.addEventListener(DialogCloseEvent.eventName, this.#handleDialogClose, { signal });
       dialog.addEventListener(DialogOpenEvent.eventName, this.#handleDialogOpen, { signal, once: true });
+      dialog.addEventListener(DialogOpenEvent.eventName, this.#positionPalette, { signal });
+      window.addEventListener('resize', this.#positionPalette, { signal });
 
       this.addEventListener('click', this.#handleModalClick, { signal });
     }
@@ -111,6 +113,24 @@ class PredictiveSearchComponent extends Component {
     }
   };
 
+  /**
+   * Anchor the palette to the header: 12px below it on desktop, over it on mobile. The
+   * desktop scrim starts at the header's bottom edge so the header stays undimmed.
+   */
+  #positionPalette = () => {
+    const dialogElement = this.closest('dialog');
+    if (!(dialogElement instanceof HTMLDialogElement) || !dialogElement.open) return;
+
+    const header = document.querySelector('header-component');
+    const rect = header instanceof HTMLElement ? header.getBoundingClientRect() : null;
+    const isMobile = window.matchMedia('(max-width: 749px)').matches;
+    const headerBottom = Math.max(0, Math.round(rect?.bottom ?? 0));
+    const top = isMobile ? Math.max(0, Math.round(rect?.top ?? 0)) : headerBottom + 12;
+
+    dialogElement.style.setProperty('--search-palette-top', `${top}px`);
+    dialogElement.style.setProperty('--search-palette-backdrop-top', `${headerBottom}px`);
+  };
+
   #loadEmptyState() {
     if (this.#emptyStateLoaded) return;
     this.#emptyStateLoaded = true;
@@ -133,7 +153,8 @@ class PredictiveSearchComponent extends Component {
         }
         return Array.from(container.querySelectorAll('[ref="resultsItems[]"], .predictive-search-results__card'));
       })
-      .filter((item) => item instanceof HTMLElement);
+      // Skip items hidden by the scope pills, result limits, or the current breakpoint
+      .filter((item) => item instanceof HTMLElement && item.checkVisibility());
 
     return /** @type {HTMLElement[]} */ (allItems);
   }
@@ -203,18 +224,8 @@ class PredictiveSearchComponent extends Component {
         this.#currentIndex = currentIndex < totalItems - 1 ? currentIndex + 1 : 0;
         break;
 
-      case 'Tab':
-        if (event.shiftKey) {
-          this.#isKeyboardNavigation = true;
-          event.preventDefault();
-          this.#currentIndex = currentIndex > 0 ? currentIndex - 1 : totalItems - 1;
-        } else {
-          this.#isKeyboardNavigation = true;
-          event.preventDefault();
-          this.#currentIndex = currentIndex < totalItems - 1 ? currentIndex + 1 : 0;
-        }
-        break;
-
+      // Tab is left to the browser so focus can reach the scope pills and "View all";
+      // the arrow keys move through the results.
       case 'ArrowUp':
         this.#isKeyboardNavigation = true;
         event.preventDefault();
@@ -241,6 +252,25 @@ class PredictiveSearchComponent extends Component {
       }
     }
   };
+
+  /**
+   * Show every result type, or a single one, from the scope pills.
+   * @param {MouseEvent} event - The click on a scope pill.
+   */
+  setScope(event) {
+    const pill = event.target instanceof Element ? event.target.closest('.search-palette__scope') : null;
+    if (!(pill instanceof HTMLElement)) return;
+
+    const results = pill.closest('[data-search-results]');
+    if (!(results instanceof HTMLElement)) return;
+
+    results.dataset.scope = pill.dataset.scope ?? 'all';
+    for (const scopePill of results.querySelectorAll('.search-palette__scope')) {
+      scopePill.setAttribute('aria-pressed', String(scopePill === pill));
+    }
+
+    this.#currentIndex = -1;
+  }
 
   /**
    * Clears the recently viewed products.
@@ -319,6 +349,10 @@ class PredictiveSearchComponent extends Component {
     const url = new URL(Theme.routes.predictive_search_url, location.origin);
     url.searchParams.set('q', searchTerm);
     url.searchParams.set('resources[limit_scope]', 'each');
+    // Resource types follow the theme's Search settings (see search-modal.liquid)
+    if (this.dataset.resourceTypes) {
+      url.searchParams.set('resources[type]', this.dataset.resourceTypes);
+    }
 
     const { predictiveSearchResults } = this.refs;
 

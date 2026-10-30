@@ -1,0 +1,69 @@
+{%- doc -%}
+  Renders one product in the search palette: a card (image, name, price) on desktop and a
+  row (thumbnail, name, price, chevron) on mobile. The list item keeps the
+  `predictive-search-results__card` hook that keyboard navigation in predictive-search.js reads.
+
+  @param {product} product - The product to render.
+  @param {string} [ref] - Component ref for the list item, e.g. `resultsItems[]`.
+
+  @example
+  {% render 'search-palette-product', product: product, ref: 'resultsItems[]' %}
+{%- enddoc -%}
+
+{%- liquid
+  assign variant = product.selected_or_first_available_variant
+  assign price = variant.price
+  assign compare_at_price = variant.compare_at_price
+  assign image = product.featured_image
+
+  if settings.currency_code_enabled_product_cards
+    assign price_label = price | money_with_currency
+    assign compare_at_label = compare_at_price | money_with_currency
+  else
+    assign price_label = price | money
+    assign compare_at_label = compare_at_price | money
+  endif
+-%}
+
+<li
+  class="predictive-search-results__card predictive-search-results__card--product search-palette__item"
+  {% if ref != blank %}
+    ref="{{ ref }}"
+  {% endif %}
+>
+  <a
+    href="{{ product.url }}"
+    class="search-palette-product"
+  >
+    <span class="search-palette-product__media">
+      {%- if image != blank -%}
+        {{
+          image
+          | image_url: width: 450
+          | image_tag:
+            widths: '96, 150, 300, 450',
+            sizes: '(min-width: 750px) 149px, 48px',
+            loading: 'lazy',
+            alt: '',
+            class: 'search-palette-product__image'
+        }}
+      {%- endif -%}
+    </span>
+    <span class="search-palette-product__info">
+      <span class="search-palette-product__title">{{ product.title | escape }}</span>
+      <span class="search-palette-product__price">
+        {%- if compare_at_price > price -%}
+          <span class="visually-hidden">{{ 'content.price_sale' | t }}</span>
+          <span class="search-palette-product__price-sale">{{ price_label }}</span>
+          <span class="visually-hidden">{{ 'content.price_regular' | t }}</span>
+          <s class="search-palette-product__price-compare">{{ compare_at_label }}</s>
+        {%- else -%}
+          <span>{{ price_label }}</span>
+        {%- endif -%}
+      </span>
+    </span>
+    <span class="search-palette__chevron">
+      {{- 'icon-chevron-right-line.svg' | inline_asset_content -}}
+    </span>
+  </a>
+</li>

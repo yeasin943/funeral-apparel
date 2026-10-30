@@ -74,7 +74,7 @@
   endif
 -%}
 
-<div ref="priceContainer">
+<div ref="priceContainer" class="priceContainer">
   {% if has_volume_pricing %}
     {% comment %} Volume pricing display {% endcomment %}
     {% if show_compare_price %}
@@ -109,12 +109,14 @@
           <bdi>{{ price | default: '&nbsp;' }}</bdi>
         </span>
       {% endif %}
+
     {% else %}
       <span class="price"
         ><bdi>{{ price | default: '&nbsp;' }}</bdi></span
       >
     {% endif %}
   {% endif %}
+
   {%- if selected_variant.unit_price and show_unit_price %}
     {%- liquid
       if use_currency
@@ -125,6 +127,9 @@
     -%}
     {% render 'unit-price', price: unit_price, measurement: selected_variant.unit_price_measurement %}
   {%- endif -%}
+  {% if block.settings.show_badge == true %}
+    {% render '--product-badge', product: product %}
+  {% endif %}
 </div>
 {%- if has_volume_pricing -%}
   <small

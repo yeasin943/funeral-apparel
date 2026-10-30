@@ -33,7 +33,12 @@ class HeaderDrawer extends Component {
   #onKeyUp = (event) => {
     if (event.key !== 'Escape') return;
 
-    this.#close(this.#getDetailsElement(event));
+    // Close the innermost open drawer panel. Accordion `details` are content, not panels, and
+    // a collapsed one must not swallow Escape, so the drawer stays closable from inside them.
+    const target = event.target instanceof Element ? event.target : null;
+    const panel = target?.closest('details[open]:not(accordion-custom > details)');
+
+    this.#close(panel instanceof HTMLDetailsElement ? panel : this.refs.details);
   };
 
   /**

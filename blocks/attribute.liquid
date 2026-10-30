@@ -1,0 +1,22 @@
+{% liquid
+  assign product = closest.product
+%}
+{% if product.metafields.custom.attributes != blank %}
+<div class="--product-attribute">
+  {{- product.metafields.custom.attributes -}}
+</div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Attribute",
+  "tag": null,
+  "settings": [],
+  "presets": [
+    {
+      "name": "Attribute",
+      "category": "t:categories.basic"
+    }
+  ]
+}
+{% endschema %}

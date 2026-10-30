@@ -1,0 +1,160 @@
+{% liquid
+  assign s = block.settings
+%}
+
+<div class="delivery-benefits delivery-benefits--{{ block.id }}" {{ block.shopify_attributes }}>
+  <div class="delivery-benefits__grid">
+    {% for i in (1..3) %}
+      {% liquid
+        assign image_key = 'icon_' | append: i
+        assign text_key = 'text_' | append: i
+        assign icon_image = s[image_key]
+        assign item_text = s[text_key]
+      %}
+      <div class="delivery-benefits__item">
+        {% if icon_image != blank %}
+          {{ icon_image | image_url: width: 160 | image_tag: class: 'delivery-benefits__icon', loading: 'lazy', alt: item_text, widths: '40,80,120,160' }}
+        {% else %}
+          <span class="delivery-benefits__icon delivery-benefits__placeholder" aria-hidden="true">
+            {% case i %}
+              {% when 1 %}
+                <svg viewBox="0 0 32 32" fill="none"><path d="M3 8h17v15H3zM20 13h5l4 5v5h-9" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="24" r="3" stroke="currentColor" stroke-width="1.8"/><circle cx="24" cy="24" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+              {% when 2 %}
+                <svg viewBox="0 0 32 32" fill="none"><path d="M10 8H23a10 10 0 1 1-9.5 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15 2 9 8l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {% when 3 %}
+                <svg viewBox="0 0 32 32" fill="none"><path d="M3 10h25m-7-7 7 7-7 7M29 22H4m7-7-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {% endcase %}
+          </span>
+        {% endif %}
+        {% if item_text != blank %}<div class="delivery-benefits__text">{{ item_text | escape | newline_to_br }}</div>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if s.bottom_text != blank %}
+    <div class="delivery-benefits__footer">
+      {% if s.bottom_link != blank %}<a class="delivery-benefits__footer-link" href="{{ s.bottom_link }}">{% endif %}
+        {% if s.bottom_icon != blank %}
+          {{ s.bottom_icon | image_url: width: 160 | image_tag: class: 'delivery-benefits__footer-icon', loading: 'lazy', alt: '', widths: '40,80,120,160' }}
+        {% else %}
+          <span class="delivery-benefits__footer-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2"/><path d="M3 16h26M16 3c-8 7-8 19 0 26M16 3c8 7 8 19 0 26" stroke="currentColor" stroke-width="2"/></svg></span>
+        {% endif %}
+        <span>{{ s.bottom_text | escape }}</span>
+      {% if s.bottom_link != blank %}</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% style %}
+  .delivery-benefits--{{ block.id }} {
+    --db-bg: {{ s.background_color }};
+    --db-fg: {{ s.text_color }};
+    --db-divider: {{ s.divider_color }};
+    --db-icon-size: {{ s.icon_size }}px;
+    --db-font-size: {{ s.font_size }}px;
+    background: var(--db-bg);
+    color: var(--db-fg);
+    padding: {{ s.padding_vertical }}px {{ s.padding_horizontal }}px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: {{ s.icon_text_gap }}px;
+    text-align: center;
+    padding: 8px 10px 10px;
+    min-width: 0;
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__item + .delivery-benefits__item {
+    border-left: 1px solid var(--db-divider);
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__icon,
+  .delivery-benefits--{{ block.id }} .delivery-benefits__footer-icon {
+    display: block;
+    width: var(--db-icon-size);
+    height: var(--db-icon-size);
+    flex: none;
+    object-fit: contain;
+    color: var(--db-fg);
+  }
+  .delivery-benefits--{{ block.id }} svg { display: block; width: 100%; height: 100%; }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__text {
+    font-size: var(--db-font-size);
+    line-height: 1.4;
+    font-weight: 400;
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: {{ s.footer_gap }}px;
+    font-size: var(--db-font-size);
+    line-height: 1.4;
+    text-align: center;
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__footer-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .delivery-benefits--{{ block.id }} .delivery-benefits__footer-link:hover { text-decoration: underline; }
+  @media screen and (max-width: 749px) {
+    .delivery-benefits--{{ block.id }} {
+      padding: {{ s.mobile_padding_vertical }}px 12px;
+      --db-icon-size: {{ s.mobile_icon_size }}px;
+      --db-font-size: {{ s.mobile_font_size }}px;
+    }
+    .delivery-benefits--{{ block.id }} .delivery-benefits__item { padding: 8px 5px; gap: 10px; }
+    .delivery-benefits--{{ block.id }} .delivery-benefits__footer { gap: 10px; }
+    .delivery-benefits--{{ block.id }} .delivery-benefits__footer-link { gap: 10px; }
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Delivery & returns",
+  "settings": [
+    { "type": "header", "content": "First benefit" },
+    { "type": "image_picker", "id": "icon_1", "label": "First icon" },
+    { "type": "textarea", "id": "text_1", "label": "First text", "default": "Ships from LA" },
+    { "type": "header", "content": "Second benefit" },
+    { "type": "image_picker", "id": "icon_2", "label": "Second icon" },
+    { "type": "textarea", "id": "text_2", "label": "Second text", "default": "30-Day Returns" },
+    { "type": "header", "content": "Third benefit" },
+    { "type": "image_picker", "id": "icon_3", "label": "Third icon" },
+    { "type": "textarea", "id": "text_3", "label": "Third text", "default": "14 Days\nExchanges" },
+    { "type": "header", "content": "Bottom message" },
+    { "type": "image_picker", "id": "bottom_icon", "label": "Bottom icon" },
+    { "type": "text", "id": "bottom_text", "label": "Bottom text", "default": "Ordering from outside the US?" },
+    { "type": "url", "id": "bottom_link", "label": "Bottom link (optional)" },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#FDFDF5" },
+    { "type": "color", "id": "text_color", "label": "Text and icons", "default": "#0B0B0B" },
+    { "type": "color", "id": "divider_color", "label": "Dividers", "default": "#E7E7E7" },
+    { "type": "header", "content": "Desktop layout" },
+    { "type": "range", "id": "icon_size", "label": "Icon size", "min": 20, "max": 64, "step": 2, "unit": "px", "default": 32 },
+    { "type": "range", "id": "font_size", "label": "Font size", "min": 12, "max": 28, "step": 1, "unit": "px", "default": 16 },
+    { "type": "range", "id": "icon_text_gap", "label": "Icon to text spacing", "min": 4, "max": 32, "step": 2, "unit": "px", "default": 14 },
+    { "type": "range", "id": "footer_gap", "label": "Space above bottom message", "min": 10, "max": 80, "step": 2, "unit": "px", "default": 34 },
+    { "type": "range", "id": "padding_vertical", "label": "Vertical padding", "min": 0, "max": 80, "step": 2, "unit": "px", "default": 20 },
+    { "type": "range", "id": "padding_horizontal", "label": "Horizontal padding", "min": 0, "max": 60, "step": 2, "unit": "px", "default": 16 },
+    { "type": "header", "content": "Mobile layout" },
+    { "type": "range", "id": "mobile_icon_size", "label": "Mobile icon size", "min": 16, "max": 48, "step": 2, "unit": "px", "default": 26 },
+    { "type": "range", "id": "mobile_font_size", "label": "Mobile font size", "min": 10, "max": 20, "step": 1, "unit": "px", "default": 12 },
+    { "type": "range", "id": "mobile_padding_vertical", "label": "Mobile vertical padding", "min": 0, "max": 60, "step": 2, "unit": "px", "default": 18 }
+  ],
+  "presets": [{ "name": "Delivery & returns" }]
+}
+{% endschema %}

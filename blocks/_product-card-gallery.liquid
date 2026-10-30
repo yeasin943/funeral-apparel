@@ -1,4 +1,5 @@
 {% assign product = closest.product %}
+{% assign collection = closest.collection %}
 
 {% capture children %}
   {% unless product == blank %}
@@ -27,14 +28,16 @@
       </div>
     {%- endif -%}
 
-    <div class="--secondary-badge product-badges product-badges--top-right product-badges__badge product-badges__badge--rectangle">New</div>
+     {% if product.metafields.custom.secondary_badge != blank %}
+      <div class="--secondary-badge product-badges product-badges--top-right product-badges__badge product-badges__badge--rectangle">{{- product.metafields.custom.secondary_badge -}}</div>
+  {% endif %}
     {% if product.available and settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add', product: product, section_id: section.id %}
     {% endif %}
   {% endunless %}
 {% endcapture %}
 
-{% render 'card-gallery', children: children %}
+{% render 'card-gallery', children: children, collection: collection %}
 
 {% # Title for the zoomed out grid view %}
 <h3 class="product-grid-view-zoom-out--details">

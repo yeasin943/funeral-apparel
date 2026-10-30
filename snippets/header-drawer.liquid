@@ -6,6 +6,7 @@
   @param {string} [data_header_drawer_type] - The type of header drawer to render
   @param {object} [block] - The block that can be used to provide settings
   @param {object} [section] - The section that can be used to provide settings
+  @param {string} [mega_menu_promos] - Captured `_mega-menu-promo` blocks for the "Campaign" menu style
 
   @example
   {% render 'header-drawer', linklist: section.settings.menu, class: 'header-drawer--mobile' %}
@@ -269,6 +270,20 @@
                 style="--menu-drawer-animation-index: {{ animation_index }};"
               >
                 {%- if link.links != blank -%}
+                  {%- comment -%}
+                    The "Campaign" menu style uses an accordion instead of a sliding submenu.
+                  {%- endcomment -%}
+                  {%- if block_settings.menu_style == 'campaign' -%}
+                    {%- capture promo -%}
+                      {%- render 'util-mega-menu-promo', promos: mega_menu_promos, handle: link.handle -%}
+                    {%- endcapture -%}
+                    {% render 'menu-drawer-campaign-item',
+                      link: link,
+                      index: forloop.index,
+                      promo: promo,
+                      dividers: block_settings.drawer_dividers
+                    %}
+                  {%- else -%}
                   {%- comment -%}
                     Regardless of the Accordion setting, in menus with 3 levels of links, we use a details element to handle the top level of the menu for links that have children.
                   {%- endcomment -%}
@@ -569,6 +584,7 @@
                       </div>
                     </div>
                   </details>
+                  {%- endif -%}
                 {%- else -%}
                   {%- comment -%}
                     Simple links for links with no children (regardless of accordion setting), in menus with 3 levels of links
@@ -1118,7 +1134,9 @@
     text-transform: var(--menu-top-level-font-case);
     color: var(--menu-top-level-font-color);
     justify-content: space-between;
-
+  @media(max-width: 768px) {
+    font-size: 16px;
+  }
     &:hover {
       color: var(--menu-top-level-font-color);
     }
@@ -1231,6 +1249,7 @@
     height: fit-content;
     color: inherit;
     padding: var(--padding-lg);
+    margin: 5px;
   }
 
   /* Match the specificity of the base [dir='rtl'] .close-button safe-area rule so
@@ -1262,6 +1281,7 @@
   .menu-drawer__back-button.menu-drawer__back-button {
     border-radius: 0;
     outline-offset: calc(var(--padding-2xs) * -1);
+    outline: none !important; 
   }
 
   /* Safari < 16.4 draws the close focus ring via a pseudo-element; keep it

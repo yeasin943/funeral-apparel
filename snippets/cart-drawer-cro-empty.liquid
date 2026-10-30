@@ -1,0 +1,259 @@
+{%- liquid
+  assign empty_heading = settings.cart_drawer_empty_heading
+  if empty_heading == blank
+    assign empty_heading = 'content.your_cart_is_empty' | t
+  endif
+
+  assign button_label = settings.cart_drawer_empty_button_label
+  if button_label == blank
+    assign button_label = 'actions.continue_shopping' | t
+  endif
+
+  assign button_link = settings.empty_cart_button_link | default: routes.all_products_collection_url
+  assign browse_menu = linklists[settings.cart_drawer_browse_menu]
+  assign browse_highlight = settings.cart_drawer_browse_highlight | strip | downcase
+  assign tile_count = 0
+-%}
+
+{%- capture tiles_html -%}
+  {%- for i in (1..2) -%}
+    {%- liquid
+      assign image_key = 'cart_drawer_tile_' | append: i | append: '_image'
+      assign label_key = 'cart_drawer_tile_' | append: i | append: '_label'
+      assign link_key = 'cart_drawer_tile_' | append: i | append: '_link'
+      assign tile_image = settings[image_key]
+      assign tile_label = settings[label_key]
+      assign tile_link = settings[link_key]
+    -%}
+    {%- if tile_image != blank or tile_label != blank -%}
+      {%- assign tile_count = tile_count | plus: 1 -%}
+      {%- if tile_link != blank -%}
+        <a
+          href="{{ tile_link }}"
+          class="cart-drawer-cro__tile"
+        >
+      {%- else -%}
+        <div class="cart-drawer-cro__tile">
+      {%- endif -%}
+      {%- if tile_image != blank -%}
+        {%- assign tile_alt = tile_image.alt | default: tile_label | escape -%}
+        {{
+          tile_image
+          | image_url: width: 800
+          | image_tag:
+            widths: '300, 400, 600, 800',
+            sizes: '(min-width: 750px) 220px, 45vw',
+            loading: 'lazy',
+            alt: tile_alt,
+            class: 'cart-drawer-cro__tile-image'
+        }}
+      {%- else -%}
+        {%- assign placeholder_name = 'lifestyle-' | append: i -%}
+        {{ placeholder_name | placeholder_svg_tag: 'cart-drawer-cro__tile-image' }}
+      {%- endif -%}
+      {%- if tile_label != blank -%}
+        <span class="cart-drawer-cro__tile-label">{{ tile_label | escape }}</span>
+      {%- endif -%}
+      {%- if tile_link != blank -%}
+        </a>
+      {%- else -%}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+<div class="cart-drawer-cro__scroll">
+  <div class="cart-drawer-cro__empty">
+    <div class="cart-drawer-cro__empty-intro">
+      {%- if settings.cart_drawer_empty_icon -%}
+        <span class="cart-drawer-cro__empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 8h14l-1 13H6L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        </span>
+      {%- endif -%}
+      <h3 class="cart-drawer-cro__empty-heading h3">{{ empty_heading | escape }}</h3>
+      {%- if settings.cart_drawer_empty_subtext != blank -%}
+        <p class="cart-drawer-cro__empty-subtext">{{ settings.cart_drawer_empty_subtext | escape }}</p>
+      {%- endif -%}
+    </div>
+
+    {%- if tile_count > 0 -%}
+      <div class="cart-drawer-cro__tiles{% if tile_count == 1 %} cart-drawer-cro__tiles--single{% endif %}">
+        {{ tiles_html }}
+      </div>
+    {%- endif -%}
+
+    {%- if browse_menu.links.size > 0 -%}
+      <nav
+        class="cart-drawer-cro__browse"
+        {% if settings.cart_drawer_browse_heading != blank %}
+          aria-label="{{ settings.cart_drawer_browse_heading | escape }}"
+        {% endif %}
+      >
+        {%- if settings.cart_drawer_browse_heading != blank -%}
+          <p class="cart-drawer-cro__browse-heading">{{ settings.cart_drawer_browse_heading | escape }}</p>
+        {%- endif -%}
+        <ul
+          class="cart-drawer-cro__browse-links"
+          role="list"
+        >
+          {%- for link in browse_menu.links -%}
+            {%- assign link_title_check = link.title | strip | downcase -%}
+            <li>
+              <a
+                href="{{ link.url }}"
+                class="cart-drawer-cro__browse-link{% if browse_highlight != blank and link_title_check == browse_highlight %} cart-drawer-cro__browse-link--accent{% endif %}"
+              >
+                {{- link.title | escape -}}
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+  </div>
+</div>
+
+<div class="cart-drawer-cro__footer">
+  <a
+    href="{{ button_link }}"
+    class="button-secondary cart-drawer-cro__empty-button"
+  >
+    <span class="button-text">{{ button_label | escape }}</span>
+  </a>
+</div>
+
+{% stylesheet %}
+  .cart-drawer-cro__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap-xl);
+    padding-block: var(--padding-2xl);
+    text-align: center;
+  }
+
+  .cart-drawer-cro__empty-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap-xs);
+  }
+
+  .cart-drawer-cro__empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-block-end: var(--margin-md);
+    border: 1px solid currentColor;
+  }
+
+  .cart-drawer-cro__empty-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .cart-drawer-cro__empty-heading {
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .cart-drawer-cro__empty-subtext {
+    margin: 0;
+    font-size: var(--font-size--sm);
+  }
+
+  .cart-drawer-cro__tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap-md);
+    width: 100%;
+  }
+
+  .cart-drawer-cro__tiles--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cart-drawer-cro__tile {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background-color: rgb(var(--color-foreground-rgb) / 0.06);
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .cart-drawer-cro__tile-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--animation-speed) var(--animation-easing);
+  }
+
+  .cart-drawer-cro__tile:hover .cart-drawer-cro__tile-image {
+    transform: scale(1.03);
+  }
+
+  .cart-drawer-cro__tile-label {
+    position: absolute;
+    inset-inline: 0;
+    bottom: var(--padding-lg);
+    font-size: var(--font-size--sm);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  }
+
+  .cart-drawer-cro__browse {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap-md);
+  }
+
+  .cart-drawer-cro__browse-heading {
+    margin: 0;
+    font-size: var(--font-size--xs);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .cart-drawer-cro__browse-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--gap-xs) var(--gap-xl);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cart-drawer-cro__browse-link {
+    color: var(--color-foreground);
+    font-size: var(--font-size--sm);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+  }
+
+  .cart-drawer-cro__browse-link--accent {
+    color: var(--cd-accent);
+  }
+
+  .cart-drawer-cro__empty-button {
+    width: 100%;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+{% endstylesheet %}

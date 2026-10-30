@@ -372,6 +372,8 @@
     data-presentation="{{ media_presentation }}"
     {{ block_shopify_attributes }}
   >
+    
+    {% render '--product-badge', product: product %} 
     {% capture slides %}
       {% for media in sorted_media %}
         {% capture children %}

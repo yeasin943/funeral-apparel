@@ -7,9 +7,16 @@
   @param {number} [limit] - limit of products to display
   @param {string} [products_test_id] - a playwright test id, used to differentiate empty state from 'real' search results
 {%- enddoc -%}
+
 {%- liquid
   assign recently_viewed_title_text = 'content.recently_viewed_products' | t
+  assign limit = limit | default: 8
 -%}
+
+{%- comment -%}
+  predictive-search.js moves the children of the recently viewed list into the empty state's
+  #predictive-search-products, so keep each group a single direct child.
+{%- endcomment -%}
 <div
   id="predictive-search-products"
   class="predictive-search-results__products"
@@ -19,94 +26,54 @@
 >
   {% if title == recently_viewed_title_text %}
     <div
-      class="recently-viewed-wrapper"
+      class="recently-viewed-wrapper search-palette__group"
       ref="recentlyViewedWrapper"
     >
-      <h4
-        class="predictive-search-results__title"
-        ref="recentlyViewedTitle[]"
-      >
-        {{ title }}
+      <div class="search-palette__label-row">
+        <h4
+          class="search-palette__label"
+          ref="recentlyViewedTitle[]"
+        >
+          {{ title }}
+        </h4>
         <button
-          class="predictive-search-results__clear button button-unstyled"
+          class="search-palette__text-link button-unstyled"
           type="button"
           on:click="/clearRecentlyViewedProducts"
         >
           {{ 'actions.clear' | t }}
         </button>
-      </h4>
-      <ul
-        class="predictive-search-results__list predictive-search-results__wrapper-products list-unstyled"
-      >
-        {% liquid
-          assign limit = limit | default: 8
-        %}
+      </div>
+      <ul class="search-palette__products predictive-search-results__wrapper-products list-unstyled">
         {% comment %}
           If we're searching for recently viewed products by id, we need to reorder the products.
           The order here comes from the search terms, and we display the products in the order of the ids.
         {% endcomment %}
         {% if order_ids != blank %}
-          {% for _id in order_ids %}
+          {% for _id in order_ids limit: limit %}
             {% assign int_id = _id | times: 1 %}
             {% assign product = products | find: 'id', int_id %}
-            <li
-              class="predictive-search-results__card predictive-search-results__card--product"
-              ref="recentlyViewedItems[]"
-            >
-              {% render 'resource-card',
-                resource_type: 'product',
-                resource: product,
-                image_width: 500,
-                image_hover: true,
-                image_aspect_ratio: '4 / 5',
-                product_view_context: 'search'
-              %}
-            </li>
+            {% if product %}
+              {% render 'search-palette-product', product: product, ref: 'recentlyViewedItems[]' %}
+            {% endif %}
           {% endfor %}
         {% else %}
           {% for product in products limit: limit %}
-            <li
-              class="predictive-search-results__card predictive-search-results__card--product"
-              ref="recentlyViewedItems[]"
-            >
-              {% render 'resource-card',
-                resource_type: 'product',
-                resource: product,
-                image_width: 500,
-                image_hover: true,
-                image_aspect_ratio: '4 / 5',
-                product_view_context: 'search'
-              %}
-            </li>
+            {% render 'search-palette-product', product: product, ref: 'recentlyViewedItems[]' %}
           {% endfor %}
         {% endif %}
       </ul>
     </div>
   {% else %}
-    <h4 class="predictive-search-results__title">
-      {{ title }}
-    </h4>
-    <ul
-      class="predictive-search-results__list predictive-search-results__wrapper-products list-unstyled"
-    >
-      {% liquid
-        assign limit = limit | default: 8
-      %}
-      {% for product in products limit: limit %}
-        <li
-          class="predictive-search-results__card predictive-search-results__card--product"
-          ref="resultsItems[]"
-        >
-          {% render 'resource-card',
-            resource_type: 'product',
-            resource: product,
-            image_width: 500,
-            image_hover: true,
-            image_aspect_ratio: '4 / 5',
-            product_view_context: 'search'
-          %}
-        </li>
-      {% endfor %}
-    </ul>
+    <div class="search-palette__group">
+      <div class="search-palette__label-row">
+        <h4 class="search-palette__label">{{ title }}</h4>
+      </div>
+      <ul class="search-palette__products predictive-search-results__wrapper-products list-unstyled">
+        {% for product in products limit: limit %}
+          {% render 'search-palette-product', product: product, ref: 'resultsItems[]' %}
+        {% endfor %}
+      </ul>
+    </div>
   {% endif %}
 </div>

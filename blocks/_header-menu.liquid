@@ -9,7 +9,15 @@
 {% liquid
   assign block_settings = block.settings
   assign effective_submenu_color = block_settings.background_color | default: settings.page_background_color
+  assign highlight_handle = block_settings.highlight_menu_item | handleize
 %}
+
+{%- comment -%}
+  Promo blocks render once here; each menu item picks its own through util-mega-menu-promo.
+{%- endcomment -%}
+{% if block_settings.menu_style == 'campaign' and variant != 'navigation_bar' %}
+  {% capture mega_menu_promos %}{% content_for 'blocks' %}{% endcapture %}
+{% endif %}
 
 {% case variant %}
   {% when 'mobile' %}
@@ -23,7 +31,8 @@
         linklist: block_settings.menu,
         data_header_drawer_type: 'mobile-drawer',
         block: block,
-        section: section
+        section: section,
+        mega_menu_promos: mega_menu_promos
       %}
     </div>
 
@@ -96,6 +105,9 @@
       {% for link in block_settings.menu.links %}
         <li
           class="menu-list__list-item"
+          {% if highlight_handle != blank and link.handle == highlight_handle and block_settings.highlight_color != blank %}
+            style="--menu-top-level-font-color: {{ block_settings.highlight_color }}; --menu-top-level-font-color-rgb: {{ block_settings.highlight_color.rgb }};"
+          {% endif %}
           on:blur="/deactivate"
           on:pointerenter="/activate"
           on:pointerleave="/deactivate"
@@ -125,14 +137,20 @@
               on:click="/toggle"
             >
               <span class="visually-hidden">{{ 'accessibility.show_submenu' | t: title: link.title }}</span>
-              <svg
-                class="menu-list__disclosure-icon"
-                aria-hidden="true"
-                focusable="false"
-                viewBox="0 0 10 6"
-              >
-                {%- render 'icon', icon: 'caret' -%}
-              </svg>
+              {%- if menu_content_type == 'campaign' -%}
+                <span class="menu-list__disclosure-icon menu-list__disclosure-icon--chevron">
+                  {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+                </span>
+              {%- else -%}
+                <svg
+                  class="menu-list__disclosure-icon"
+                  aria-hidden="true"
+                  focusable="false"
+                  viewBox="0 0 10 6"
+                >
+                  {%- render 'icon', icon: 'caret' -%}
+                </svg>
+              {%- endif -%}
             </button>
             </span>
             {%- comment -%}
@@ -147,22 +165,33 @@
               >
                 {% assign list_id = 'MegaMenuList-' | append: forloop.index %}
                 <div class="mega-menu section section--full-width-margin section--{{ section.settings.section_width }}">
-                  <div
-                    class="mega-menu__grid"
-                    data-menu-grid-id="{{ list_id }}"
-                  >
-                    {% render 'mega-menu-list',
-                      parent_link: link,
-                      id: list_id,
-                      section: section,
-                      grid_columns_count: 6,
-                      grid_columns_count_tablet: 4,
-                      grid_columns_count_collection_images: 8,
-                      menu_content_type: menu_content_type,
-                      content_aspect_ratio: ratio,
-                      image_border_radius: image_border_radius
-                    %}
-                  </div>
+                  {% if menu_content_type == 'campaign' %}
+                    {% capture promo %}{% render 'util-mega-menu-promo', promos: mega_menu_promos, handle: link.handle %}{% endcapture %}
+                    <div style="--menu-image-border-radius: {{ image_border_radius }}px;">
+                      {% render 'mega-menu-campaign',
+                        parent_link: link,
+                        id: list_id,
+                        promo: promo
+                      %}
+                    </div>
+                  {% else %}
+                    <div
+                      class="mega-menu__grid"
+                      data-menu-grid-id="{{ list_id }}"
+                    >
+                      {% render 'mega-menu-list',
+                        parent_link: link,
+                        id: list_id,
+                        section: section,
+                        grid_columns_count: 6,
+                        grid_columns_count_tablet: 4,
+                        grid_columns_count_collection_images: 8,
+                        menu_content_type: menu_content_type,
+                        content_aspect_ratio: ratio,
+                        image_border_radius: image_border_radius
+                      %}
+                    </div>
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -192,7 +221,7 @@
 
     <header-menu
       ref="headerMenu"
-      class="header-menu"
+      class="header-menu{% if menu_content_type == 'campaign' %} header-menu--campaign{% endif %}"
       {{ block.shopify_attributes }}
       data-hydration-key="header-menu"
       data-skip-node-update
@@ -227,6 +256,12 @@
   .header__underlay {
     --color-submenu: rgb({{effective_submenu_color.rgb}});
   }
+  {%- if highlight_handle != blank and block_settings.highlight_color != blank %}
+    /* Highlighted item (e.g. Sale) in the mobile drawer; desktop sets it on the list item */
+    #HeaderDrawer-{{ highlight_handle }} {
+      --menu-top-level-font-color: {{ block_settings.highlight_color }};
+    }
+  {%- endif %}
 {% endstyle %}
 {% stylesheet %}
   .header__drawer {
@@ -813,12 +848,116 @@
   .menu-list__list-item:not(:has([aria-expanded='true'])) > .menu-list__submenu product-component {
     display: none;
   }
+
+  /* Campaign menu style: 28px between items, a visible chevron on items with a panel,
+     and a 2px underline at the bar's bottom edge under the open item */
+  .header-menu--campaign {
+    /* Span the row's vertical padding so items fill the bar and the underline lands on its
+       bottom edge; the overflow list clips anything drawn outside it */
+    --header-menu-bleed-start: var(--padding-block-start, var(--header-padding));
+    --header-menu-bleed-end: var(--padding-block-end, var(--header-padding));
+
+    height: calc(100% + var(--header-menu-bleed-start) + var(--header-menu-bleed-end));
+    margin-block: calc(-1 * var(--header-menu-bleed-start)) calc(-1 * var(--header-menu-bleed-end));
+
+    .menu-list {
+      --menu-horizontal-gap: 28px;
+    }
+
+    .menu-list__link {
+      letter-spacing: 0.05em;
+    }
+
+    .menu-list__link-title {
+      padding-inline: 8px;
+    }
+
+    .menu-list__trigger {
+      align-items: center;
+
+      .menu-list__link-title {
+        padding-inline-end: 0;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset-inline: 14px;
+        inset-block-end: 0;
+        height: 2px;
+        background-color: var(--menu-top-level-font-color);
+        transform: scaleX(0);
+        transition: transform var(--animation-speed) var(--animation-easing);
+      }
+    }
+
+    .menu-list__list-item:has(> .menu-list__trigger [aria-expanded='true']) .menu-list__trigger::after {
+      transform: scaleX(1);
+    }
+
+    .menu-list__disclosure {
+      position: static;
+      align-self: stretch;
+      padding-block: 0;
+      padding-inline: 6px 14px;
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .menu-list__disclosure-icon--chevron {
+      display: flex;
+      width: 12px;
+      height: 12px;
+      aspect-ratio: auto;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    /* Keep every item at full strength while another is hovered or open */
+    .menu-list .menu-list__link {
+      color: var(--menu-top-level-font-color);
+    }
+
+    .menu-list__submenu-inner {
+      padding-block: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .menu-list__trigger::after {
+        transition: none;
+      }
+    }
+  }
+
+  /* The overflow panel stacks items vertically, so drop the inline chevron and underline */
+  .header-menu--campaign [slot='overflow'] {
+    .menu-list__link-title {
+      padding-inline: 0;
+    }
+
+    .menu-list__trigger::after {
+      content: none;
+    }
+
+    .menu-list__disclosure {
+      padding-inline: var(--padding-3xs);
+    }
+  }
 {% endstylesheet %}
 
 {% schema %}
 {
   "name": "t:names.menu",
   "tag": null,
+  "blocks": [
+    {
+      "type": "_mega-menu-promo"
+    }
+  ],
   "settings": [
     {
       "type": "link_list",
@@ -847,6 +986,19 @@
       "placeholder": "t:settings.default"
     },
     {
+      "type": "text",
+      "id": "highlight_menu_item",
+      "label": "t:settings.highlight_menu_item",
+      "info": "t:info.highlight_menu_item",
+      "default": "Sale"
+    },
+    {
+      "type": "color",
+      "id": "highlight_color",
+      "label": "t:settings.highlight_color",
+      "default": "#A3121C"
+    },
+    {
       "type": "header",
       "content": "t:content.typography"
     },
@@ -862,6 +1014,10 @@
         {
           "value": "0.75rem",
           "label": "12px"
+        },
+        {
+          "value": "0.8125rem",
+          "label": "13px"
         },
         {
           "value": "0.875rem",
@@ -963,9 +1119,18 @@
         {
           "value": "featured_collections",
           "label": "t:options.featured_collections"
+        },
+        {
+          "value": "campaign",
+          "label": "t:options.campaign"
         }
       ],
       "default": "collection_images"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:content.mega_menu_promo_paragraph",
+      "visible_if": "{{ block.settings.menu_style == 'campaign' }}"
     },
     {
       "type": "select",

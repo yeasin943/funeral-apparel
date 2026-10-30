@@ -64,7 +64,8 @@
     "view_disclosure_information_for_product": "View disclosure information for {{ product_title }}",
     "view_pricing_info": "View pricing information",
     "price_filter_low": "Low price",
-    "price_filter_high": "High price"
+    "price_filter_high": "High price",
+    "search_results_filter": "Filter search results"
   },
   "actions": {
     "add": "Add",
@@ -74,7 +75,7 @@
     "back": "Back",
     "back_to": "Back to {{ title }}",
     "back_to_main_menu": "Back to main menu",
-    "choose": "Choose",
+    "choose": "Choose options",
     "clear": "Clear",
     "clear_all": "Clear all",
     "close": "Close",
@@ -107,7 +108,26 @@
     "sign_up": "Sign up",
     "submit": "Submit",
     "view_store_information": "View store information",
-    "sort": "Sort"
+    "sort": "Sort",
+    "shop_all_title": "Shop all {{ title }}"
+  },
+  "cart_drawer": {
+    "title": "Cart",
+    "size": "Size",
+    "change_option": "Change {{ option }} for {{ title }}",
+    "percent_off": "{{ percent }}% off",
+    "remove": "Remove {{ title }}",
+    "add": "Add",
+    "add_to_cart": "Add {{ title }} to cart",
+    "select_option": "Select {{ option }}",
+    "sold_out": "Sold out",
+    "subtotal": "Subtotal",
+    "you_save": "You save {{ amount }}",
+    "checkout_total": "Checkout · {{ total }}",
+    "or_pay_with": "Or pay with",
+    "taxes_shipping": "Taxes and shipping at checkout",
+    "add_error": "Couldn't add this item. Please try again.",
+    "title_empty": "Your cart",
   },
   "blocks": {
     "contact_form": {
@@ -305,7 +325,14 @@
     "recipient_form_fields_visible": "Recipient form fields are now visible",
     "recipient_form_fields_hidden": "Recipient form fields are now hidden",
     "recipient_form_error": "There was an error with the form submission",
-    "product_custom_property_character_count": "{{ used_chars }}\/{{ max_chars }} characters used"
+    "product_custom_property_character_count": "{{ used_chars }}\/{{ max_chars }} characters used",
+    "search_results_all": "All",
+    "search_results_suggestions": "Suggestions",
+    "search_results_shown_count": "{{ shown }} of {{ total }}",
+    "search_results_view_all_count": {
+      "one": "View all {{ count }} result",
+      "other": "View all {{ count }} results"
+    }
   },
   "fields": {
     "separator": "to"

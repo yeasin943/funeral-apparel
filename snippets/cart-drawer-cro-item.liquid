@@ -1,0 +1,515 @@
+{% render 'quantity-selector-styles' %}
+
+<span
+  class="visually-hidden"
+  ref="cartItemCount"
+  aria-hidden="true"
+>
+  {{- cart.item_count -}}
+</span>
+
+<form
+  action="{{ routes.cart_url }}"
+  class="cart-form cart-drawer-cro__form"
+  id="cart-form"
+  method="post"
+>
+  <ul
+    class="cart-drawer-cro__lines"
+    role="list"
+    aria-label="{{ 'accessibility.cart' | t }}"
+  >
+    {%- for item in cart.items -%}
+      {%- liquid
+        assign line_number = item.index | plus: 1
+
+        assign is_nested = false
+        if item.parent_relationship.parent != null
+          assign is_nested = true
+        endif
+
+        assign can_update_quantity = item.instructions.can_update_quantity | default: true, allow_false: true
+        assign can_remove = item.instructions.can_remove | default: true, allow_false: true
+
+        assign unit_compare = 0
+        if item.variant.compare_at_price > item.original_price
+          assign unit_compare = item.variant.compare_at_price
+        elsif item.original_price > item.final_price
+          assign unit_compare = item.original_price
+        endif
+
+        assign percent_off = 0
+        if unit_compare > item.final_price
+          assign unit_saved = unit_compare | minus: item.final_price
+          assign percent_off = unit_saved | times: 100.0 | divided_by: unit_compare | round
+        endif
+
+        assign line_compare = unit_compare | times: item.quantity
+
+        if settings.currency_code_enabled_cart_items
+          assign line_price = item.final_line_price | money_with_currency
+          assign line_compare_price = line_compare | money_with_currency
+          assign unit_price = item.unit_price | money_with_currency
+        else
+          assign line_price = item.final_line_price | money
+          assign line_compare_price = line_compare | money
+          assign unit_price = item.unit_price | money
+        endif
+
+        assign show_variant_select = false
+        if item.product.has_only_default_variant == false and item.item_components.size == 0 and is_nested == false and can_update_quantity
+          assign show_variant_select = true
+        endif
+
+        assign single_option = false
+        if item.product.options.size == 1
+          assign single_option = true
+        endif
+        assign option_label = item.product.options | join: ' / '
+
+        assign has_visible_properties = false
+        for property in item.properties
+          assign property_first_char = property.first | slice: 0
+          if property.last != blank and property_first_char != '_'
+            assign has_visible_properties = true
+            break
+          endif
+        endfor
+      -%}
+      <li
+        id="CartDrawerItem-{{ item.key }}"
+        class="cart-drawer-cro__line{% if is_nested %} cart-drawer-cro__line--nested{% endif %}"
+        ref="cartItemRows[]"
+        data-key="{{ item.key }}"
+        data-parent-key="{{ item.parent_relationship.parent.key }}"
+      >
+        <a
+          href="{{ item.url }}"
+          class="cart-drawer-cro__line-media"
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          {%- if item.image -%}
+            {{
+              item.image
+              | image_url: width: 240
+              | image_tag:
+                widths: '120, 160, 240',
+                sizes: '80px',
+                loading: 'lazy',
+                alt: '',
+                class: 'cart-drawer-cro__line-image'
+            }}
+          {%- else -%}
+            {{ 'product-1' | placeholder_svg_tag: 'cart-drawer-cro__line-image' }}
+          {%- endif -%}
+        </a>
+
+        <div class="cart-drawer-cro__line-body">
+          <div class="cart-drawer-cro__line-top">
+            <a
+              href="{{ item.url }}"
+              class="cart-drawer-cro__line-title"
+            >
+              {{- item.product.title | escape -}}
+            </a>
+            <button
+              type="button"
+              class="cart-drawer-cro__line-remove"
+              aria-label="{{ 'cart_drawer.remove' | t: title: item.product.title | escape }}"
+              on:click="/onLineItemRemove/{{ line_number }}"
+              {% unless can_remove %}
+                hidden
+              {% endunless %}
+            >
+              <span class="svg-wrapper">
+                {{- 'icon-close.svg' | inline_asset_content -}}
+              </span>
+            </button>
+          </div>
+
+          {%- if show_variant_select or percent_off > 0 -%}
+            <div class="cart-drawer-cro__line-meta">
+              {%- if show_variant_select -%}
+                {%- assign select_id = 'CartDrawerVariant-' | append: line_number -%}
+                <cart-variant-select
+                  class="cart-drawer-cro__variant"
+                  data-line="{{ line_number }}"
+                  data-line-key="{{ item.key }}"
+                  data-variant-id="{{ item.variant.id }}"
+                  data-quantity="{{ item.quantity }}"
+                  data-properties="{{ item.properties | json | escape }}"
+                  {% if item.selling_plan_allocation %}
+                    data-selling-plan="{{ item.selling_plan_allocation.selling_plan.id }}"
+                  {% endif %}
+                >
+                  <label
+                    for="{{ select_id }}"
+                    class="cart-drawer-cro__variant-label{% unless single_option %} visually-hidden{% endunless %}"
+                  >
+                    {{- option_label | escape -}}:
+                  </label>
+                  <select
+                    id="{{ select_id }}"
+                    class="cart-drawer-cro__variant-select"
+                    aria-label="{{ 'cart_drawer.change_option' | t: option: option_label, title: item.product.title | escape }}"
+                  >
+                    {%- for variant in item.product.variants -%}
+                      <option
+                        value="{{ variant.id }}"
+                        {% if variant.id == item.variant.id %}
+                          selected
+                        {% endif %}
+                        {% unless variant.available or variant.id == item.variant.id %}
+                          disabled
+                        {% endunless %}
+                      >
+                        {{- variant.title | escape -}}
+                        {%- unless variant.available %} – {{ 'cart_drawer.sold_out' | t }}{% endunless -%}
+                      </option>
+                    {%- endfor -%}
+                  </select>
+                  <svg class="cart-drawer-cro__variant-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 4.5 3 3 3-3"/></svg>
+                </cart-variant-select>
+              {%- endif -%}
+
+              {%- if percent_off > 0 -%}
+                <span class="cart-drawer-cro__badge">
+                  {{- 'cart_drawer.percent_off' | t: percent: percent_off -}}
+                </span>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+
+          {%- if show_variant_select == false and item.product.has_only_default_variant == false and item.item_components.size == 0 -%}
+            <p class="cart-drawer-cro__line-text">{{ item.variant.title | escape }}</p>
+          {%- endif -%}
+
+          {%- if item.item_components.size != 0 -%}
+            <ul
+              class="cart-drawer-cro__line-text cart-drawer-cro__bundle list-unstyled"
+              role="list"
+            >
+              {%- for component in item.item_components -%}
+                <li>
+                  {{- component.title | escape -}}
+                  {%- if component.quantity > 1 %} × {{ component.quantity }}{% endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+
+          {%- if has_visible_properties -%}
+            <dl class="cart-drawer-cro__line-text cart-drawer-cro__properties">
+              {%- for property in item.properties -%}
+                {%- assign property_first_char = property.first | slice: 0 -%}
+                {%- if property.last != blank and property_first_char != '_' -%}
+                  <div>
+                    <dt>{{ property.first | escape }}:</dt>
+                    <dd>
+                      {%- if property.last contains '/uploads/' -%}
+                        <a href="{{ property.last }}">{{ property.last | split: '/' | last }}</a>
+                      {%- else -%}
+                        {{ property.last | escape }}
+                      {%- endif -%}
+                    </dd>
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </dl>
+          {%- endif -%}
+
+          {%- if item.selling_plan_allocation -%}
+            <p class="cart-drawer-cro__line-text">{{ item.selling_plan_allocation.selling_plan.name | escape }}</p>
+          {%- endif -%}
+
+          <div class="cart-drawer-cro__line-bottom">
+            {% render 'quantity-selector',
+              product: item.product,
+              variant: item.variant,
+              in_cart_quantity: item.quantity,
+              line_index: item.index,
+              class: 'cart-drawer-cro__qty',
+              can_update_quantity: can_update_quantity
+            %}
+
+            <div class="cart-drawer-cro__line-prices">
+              {%- if line_compare > item.final_line_price -%}
+               {% comment %} compare price {% endcomment %}
+                <span class="visually-hidden">{{ 'content.price_sale' | t }}</span>
+              {%- endif -%}
+              <text-component
+                class="cart-drawer-cro__price"
+                value="{{ line_price | strip_html }}"
+              >
+                <bdi>{{ line_price }}</bdi>
+              </text-component>
+              {%- if item.unit_price_measurement -%}
+                <span class="cart-drawer-cro__unit-price">
+                  {% render 'unit-price', price: unit_price, measurement: item.unit_price_measurement %}
+                </span>
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="cart-drawer-cro__line-error hidden"
+          role="alert"
+          ref="cartItemErrorContainer-{{ line_number }}"
+        >
+          <span class="svg-wrapper">
+            {{- 'icon-error.svg' | inline_asset_content -}}
+          </span>
+          <small
+            class="cart-item__error-text"
+            ref="cartItemError-{{ line_number }}"
+          ></small>
+        </div>
+      </li>
+    {%- endfor -%}
+  </ul>
+</form>
+
+{% stylesheet %}
+  .cart-drawer-cro__lines {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cart-drawer-cro__line {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    column-gap: var(--gap-md);
+    padding-block: var(--padding-lg);
+    border-block-end: 1px solid var(--cd-divider);
+  }
+
+  .cart-drawer-cro__line:first-child {
+    padding-block-start: 0;
+  }
+
+  .cart-drawer-cro__line:last-child,
+  .cart-drawer-cro__line:has(+ .cart-drawer-cro__line--nested) {
+    border-block-end: none;
+  }
+
+  .cart-drawer-cro__line--nested {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    padding-inline-start: 2rem;
+  }
+
+  .cart-drawer-cro__line.is-busy {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .cart-drawer-cro__line.removing {
+    overflow: hidden;
+    animation: removeRow calc(var(--animation-speed) * 2) var(--animation-easing) forwards;
+    animation-delay: var(--animation-speed);
+  }
+
+  .cart-drawer-cro__line.adding {
+    interpolate-size: allow-keywords;
+    overflow: hidden;
+    animation: addRow calc(var(--animation-speed) * 2) var(--animation-easing) forwards;
+  }
+
+  .cart-drawer-cro__line-media {
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background-color: rgb(var(--color-foreground-rgb) / 0.04);
+  }
+
+  .cart-drawer-cro__line-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .cart-drawer-cro__line-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    min-width: 0;
+  }
+
+  .cart-drawer-cro__line-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--gap-xs);
+  }
+
+  .cart-drawer-cro__line-title {
+    color: var(--color-foreground);
+    font-size: var(--font-size--md);
+    font-weight: 500;
+    text-decoration: none;
+    text-transform: var(--product-title-case, none);
+    overflow-wrap: anywhere;
+  }
+
+  .cart-drawer-cro__line-remove {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin: -0.25rem -0.25rem 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    cursor: pointer;
+  }
+
+  .cart-drawer-cro__line-remove:hover {
+    color: var(--color-foreground);
+  }
+
+  .cart-drawer-cro__line-remove .svg-wrapper {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .cart-drawer-cro__line-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gap-xs);
+  }
+
+  .cart-drawer-cro__variant {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    padding-inline-start: 0.5rem;
+    background-color: rgb(var(--color-foreground-rgb) / 0.05);
+    font-size: var(--font-size--xs);
+  }
+
+  .cart-drawer-cro__variant:focus-within {
+    outline: 1px solid var(--color-foreground);
+    outline-offset: 1px;
+  }
+
+  .cart-drawer-cro__variant-label {
+    white-space: nowrap;
+  }
+
+  .cart-drawer-cro__variant-select {
+    min-width: 0;
+    max-width: 12rem;
+    padding: 0.3rem 1.5rem 0.3rem 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-overflow: ellipsis;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .cart-drawer-cro__variant-select:focus {
+    outline: none;
+  }
+
+  .cart-drawer-cro__variant-chevron {
+    position: absolute;
+    inset-inline-end: 0.5rem;
+    width: 0.65rem;
+    height: 0.65rem;
+    pointer-events: none;
+  }
+
+  .cart-drawer-cro__badge {
+    display: inline-block;
+    padding: 0.3rem 0.5rem;
+    background-color: var(--cd-accent);
+    color: #ffffff;
+    font-family: var(--font-accent--family, inherit);
+    font-size: 12px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .cart-drawer-cro__line-text {
+    margin: 0;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    font-size: var(--font-size--xs);
+  }
+
+  .cart-drawer-cro__properties div,
+  .cart-drawer-cro__properties dt,
+  .cart-drawer-cro__properties dd {
+    display: inline;
+    margin: 0;
+  }
+
+  .cart-drawer-cro__properties div {
+    display: block;
+  }
+
+  .cart-drawer-cro__line-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-md);
+    margin-block-start: var(--margin-xs);
+  }
+
+  .cart-drawer-cro__line .quantity-selector {
+    height: 2.25rem;
+    border-radius: 0;
+    font-size: var(--font-size--sm);
+  }
+
+  .cart-drawer-cro__line-prices {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0 var(--gap-xs);
+    text-align: end;
+  }
+
+  .cart-drawer-cro__compare {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    font-size: var(--font-size--sm);
+  }
+
+  .cart-drawer-cro__price {
+    font-size: var(--font-size--sm);
+    font-weight: 600;
+  }
+
+  .cart-drawer-cro__unit-price {
+    flex-basis: 100%;
+    font-size: var(--font-size--xs);
+  }
+
+  .cart-drawer-cro__line-error:not(.hidden) {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-2xs);
+    margin-block-start: var(--margin-xs);
+    font-size: var(--font-size--sm);
+  }
+
+  .cart-drawer-cro__line-error .svg-wrapper {
+    flex-shrink: 0;
+    width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
+  }
+{% endstylesheet %}

@@ -17,10 +17,37 @@ const slideshowState = {
 };
 
 /**
+ * Open or close the header mega menu panel (desktop) or drawer accordion (mobile) that holds a
+ * mega menu promo block, so the merchant sees the promo they are editing. The promo renders in
+ * both places, and the editor event targets only one copy, so every copy is matched.
+ * @param {HTMLElement} target
+ * @param {boolean} open
+ */
+function toggleMegaMenuPromo(target, open) {
+  if (!target.classList.contains('mega-menu-promo')) return;
+
+  const blockAttribute = target.getAttribute('data-shopify-editor-block');
+
+  for (const promo of document.querySelectorAll('.mega-menu-promo')) {
+    if (promo.getAttribute('data-shopify-editor-block') !== blockAttribute) continue;
+
+    const disclosure = promo.closest('.menu-list__list-item')?.querySelector('[ref="disclosure[]"]');
+    if (disclosure instanceof HTMLElement && disclosure.checkVisibility()) {
+      if ((disclosure.getAttribute('aria-expanded') === 'true') !== open) disclosure.click();
+    }
+
+    const accordion = promo.closest('accordion-custom > details');
+    if (accordion instanceof HTMLDetailsElement) accordion.open = open;
+  }
+}
+
+/**
  * @param {Event} event
  */
 document.addEventListener('shopify:block:select', function (event) {
   if (event.target instanceof HTMLElement) {
+    toggleMegaMenuPromo(event.target, true);
+
     // Check if the selected element is specifically a product-card block itself
     // Not a child block within the product card
 
@@ -115,6 +142,8 @@ document.addEventListener('shopify:block:select', function (event) {
 
 document.addEventListener('shopify:block:deselect', function (event) {
   if (event.target instanceof HTMLElement) {
+    toggleMegaMenuPromo(event.target, false);
+
     // Remove data-no-navigation when product card is deselected
     if (event.target.tagName === 'PRODUCT-CARD') {
       event.target.removeAttribute('data-no-navigation');

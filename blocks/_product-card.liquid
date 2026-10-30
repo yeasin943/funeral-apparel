@@ -6,13 +6,14 @@
 
 {% liquid
   assign product = closest.product
+  assign collection = closest.collection
 -%}
 
 {% capture children %}
   {% content_for 'blocks', closest.product: product %}
 {% endcapture %}
 
-{% render 'product-card', children: children, product: product, product_view_context: product_view_context %}
+{% render 'product-card', children: children, product: product, product_view_context: product_view_context, collection: collection %}
 {% render 'quantity-selector-styles' %}
 {% render 'buy-buttons-styles' %}
 {% render 'gift-card-recipient-form-styles' %}
@@ -32,6 +33,9 @@
     },
     {
       "type": "text"
+    },
+    {
+      "type": "attribute"
     },
     {
       "type": "image"

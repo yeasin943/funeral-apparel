@@ -383,6 +383,10 @@
   <div
     class="header__underlay header__underlay-open"
   ></div>
+  <div
+    class="header__scrim"
+    aria-hidden="true"
+  ></div>
   {%- if request.page_type == 'index' -%}
     <h1 class="visually-hidden">{{ shop.name }}</h1>
   {%- endif -%}
@@ -755,6 +759,32 @@
       var(--color-background-top-row) 0 var(--top-row-height),
       var(--color-submenu) var(--top-row-height) 100%
     );
+  }
+
+  /* Page scrim under an open "Campaign" mega menu panel. It ignores the pointer so leaving
+     the panel still closes it. */
+  .header__scrim {
+    position: absolute;
+    inset-inline: 0;
+    top: var(--full-open-header-height);
+    height: 100dvh;
+    background-color: rgb(11 11 11 / var(--opacity-40));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--submenu-animation-speed) var(--ease-out-cubic),
+      visibility var(--submenu-animation-speed) allow-discrete;
+  }
+
+  .header:has(.header-menu--campaign .menu-list__submenu:not([inert])) .header__scrim {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header__scrim {
+      transition: none;
+    }
   }
 
   /* End Underlays ================ */

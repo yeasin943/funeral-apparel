@@ -1,0 +1,198 @@
+{%- doc -%}
+  Renders the "Campaign" mega menu panel: link columns on the left and the item's promo on the right.
+  Second-tier links are static column headings; second-tier links without children render as
+  linked headings, stacked in one column. A "Shop all" link to the parent opens the first column.
+
+  @param {object} parent_link - The top-level menu link whose children fill the panel.
+  @param {string} id - Unique prefix for heading IDs.
+  @param {string} [promo] - Markup of the matching `_mega-menu-promo` block.
+
+  @example
+  {% render 'mega-menu-campaign', parent_link: link, id: 'MegaMenuCampaign-2', promo: promo %}
+{%- enddoc -%}
+
+{%- liquid
+  # The "Shop all" link sits under the heading of the first second-tier link that has children.
+  assign shop_all_index = 1
+  for childlink in parent_link.links
+    if childlink.links != blank
+      assign shop_all_index = forloop.index
+      break
+    endif
+  endfor
+
+  assign shop_all_label = 'actions.shop_all_title' | t: title: parent_link.title
+  assign previous_childless = false
+-%}
+
+{%- capture shop_all_item -%}
+  <li>
+    <a
+      href="{{ parent_link.url }}"
+      class="mega-menu-campaign__link mega-menu-campaign__link--all_"
+      {% if parent_link.current %}
+        aria-current="page"
+      {% endif %}
+    >
+      {{- shop_all_label | escape -}}
+    </a>
+  </li>
+{%- endcapture -%}
+
+<div class="mega-menu-campaign">
+  <div class="mega-menu-campaign__columns">
+    {%- for childlink in parent_link.links -%}
+      {%- if childlink.links != blank -%}
+        {%- assign previous_childless = false -%}
+        {%- assign heading_id = id | append: '-' | append: forloop.index -%}
+        <div class="mega-menu-campaign__column">
+          <span
+            id="{{ heading_id }}"
+            class="mega-menu-campaign__heading"
+          >
+            {{- childlink.title | escape -}}
+          </span>
+          <ul
+            class="mega-menu-campaign__links list-unstyled"
+            aria-labelledby="{{ heading_id }}"
+          >
+            {%- if forloop.index == shop_all_index -%}
+              {{ shop_all_item }}
+            {%- endif -%}
+            {%- for grandchildlink in childlink.links -%}
+              <li>
+                <a
+                  href="{{ grandchildlink.url }}"
+                  class="mega-menu-campaign__link"
+                  {% if grandchildlink.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- grandchildlink.title | escape -}}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- elsif previous_childless == false -%}
+        {%- comment -%} Stack this and the following childless links in one column. {%- endcomment -%}
+        {%- assign previous_childless = true -%}
+        <div class="mega-menu-campaign__column">
+          <ul class="mega-menu-campaign__links list-unstyled">
+            {%- if forloop.index == shop_all_index -%}
+              {{ shop_all_item }}
+            {%- endif -%}
+            {%- for grouped_link in parent_link.links offset: forloop.index0 -%}
+              {%- if grouped_link.links != blank -%}
+                {%- break -%}
+              {%- endif -%}
+              <li>
+                <a
+                  href="{{ grouped_link.url }}"
+                  class="mega-menu-campaign__heading mega-menu-campaign__heading--link"
+                  {% if grouped_link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- grouped_link.title | escape -}}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+
+  {%- if promo != blank -%}
+    <div class="mega-menu-campaign__promo">{{ promo }}</div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .mega-menu-campaign {
+    --mega-menu-campaign-muted: rgb(var(--color-foreground-rgb) / 0.65);
+
+    display: flex;
+    align-items: flex-start;
+    gap: 64px;
+    width: 100%;
+    padding-block: 40px 48px;
+    white-space: normal;
+  }
+
+  .mega-menu-campaign__columns {
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+    gap: 40px 80px;
+    min-width: 0;
+  }
+
+  .mega-menu-campaign__column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 160px;
+  }
+
+  .mega-menu-campaign__heading {
+    font-family: var(--font-subheading--family);
+    font-style: var(--font-subheading--style);
+    font-weight: var(--font-subheading--weight);
+    font-size: 0.75rem;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mega-menu-campaign-muted);
+  }
+
+  .mega-menu-campaign__heading--link {
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-foreground);
+    }
+  }
+
+  .mega-menu-campaign__links {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* 14px gap + 2px spacer between a heading and its first link */
+  .mega-menu-campaign__heading + .mega-menu-campaign__links {
+    margin-block-start: 2px;
+  }
+
+  .mega-menu-campaign__link {
+    font-family: var(--font-body--family);
+    font-style: var(--font-body--style);
+    font-weight: var(--font-body--weight);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-foreground);
+    text-decoration: none;
+    text-underline-position: from-font;
+
+    &:hover {
+      color: var(--color-foreground);
+      text-decoration: underline;
+    }
+  }
+
+  .mega-menu-campaign__link--all {
+    font-family: var(--font-subheading--family);
+    font-style: var(--font-subheading--style);
+    font-weight: var(--font-subheading--weight);
+    line-height: 1.4;
+    text-decoration: underline;
+  }
+
+  /* 560px at the Figma width; gives the link columns room on tablet widths */
+  .mega-menu-campaign__promo {
+    flex: 0 0 min(560px, 45%);
+    min-width: 0;
+  }
+{% endstylesheet %}

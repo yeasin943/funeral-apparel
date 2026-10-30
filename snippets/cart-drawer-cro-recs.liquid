@@ -1,0 +1,378 @@
+{%- liquid
+  assign recs_collection = settings.cart_drawer_recs_collection
+  assign rec_limit = settings.cart_drawer_recs_count
+  assign option_name = settings.cart_drawer_recs_option_name | strip
+  assign cart_product_ids = cart.items | map: 'product_id' | join: ','
+  assign cart_product_ids = ',' | append: cart_product_ids | append: ','
+  assign rec_shown = 0
+-%}
+
+{%- if settings.cart_drawer_recs_enabled and recs_collection != blank and recs_collection.products_count > 0 -%}
+  {%- capture rec_cards -%}
+    {%- for product in recs_collection.products -%}
+      {%- if rec_shown >= rec_limit -%}
+        {%- break -%}
+      {%- endif -%}
+
+      {%- assign id_check = ',' | append: product.id | append: ',' -%}
+      {%- if product.available == false or cart_product_ids contains id_check -%}
+        {%- continue -%}
+      {%- endif -%}
+
+      {%- liquid
+        assign rec_shown = rec_shown | plus: 1
+        assign rec_variant = product.selected_or_first_available_variant
+        assign rec_option = nil
+        if option_name != blank
+          assign rec_option = product.options_by_name[option_name]
+        endif
+
+        if settings.currency_code_enabled_product_cards
+          assign rec_price = rec_variant.price | money_with_currency
+          assign rec_compare_price = rec_variant.compare_at_price | money_with_currency
+        else
+          assign rec_price = rec_variant.price | money
+          assign rec_compare_price = rec_variant.compare_at_price | money
+        endif
+
+        assign rec_on_sale = false
+        if rec_variant.compare_at_price > rec_variant.price
+          assign rec_on_sale = true
+        endif
+
+        assign rec_alt = product.featured_media.alt | default: product.title | escape
+      -%}
+      <li class="cart-drawer-cro__rec-item">
+        <cart-quick-add
+          class="cart-drawer-cro__rec"
+          data-error-message="{{ 'cart_drawer.add_error' | t | escape }}"
+        >
+          <div class="cart-drawer-cro__rec-media">
+            <a
+              href="{{ product.url }}"
+              class="cart-drawer-cro__rec-image-link"
+              tabindex="-1"
+              aria-hidden="true"
+            >
+              {%- if product.featured_media -%}
+                {{
+                  product.featured_media
+                  | image_url: width: 400
+                  | image_tag:
+                    widths: '200, 300, 400',
+                    sizes: '(min-width: 750px) 140px, 30vw',
+                    loading: 'lazy',
+                    alt: rec_alt,
+                    class: 'cart-drawer-cro__rec-image'
+                }}
+              {%- else -%}
+                {{ 'product-1' | placeholder_svg_tag: 'cart-drawer-cro__rec-image' }}
+              {%- endif -%}
+            </a>
+
+            {%- if rec_option != nil -%}
+              {%- assign option_index = rec_option.position | minus: 1 -%}
+              <div class="cart-drawer-cro__rec-picker">
+                <p class="cart-drawer-cro__rec-picker-label">
+                  {{- 'cart_drawer.select_option' | t: option: rec_option.name -}}
+                </p>
+                <div class="cart-drawer-cro__rec-sizes">
+                  {%- for value in rec_option.values -%}
+                    {%- liquid
+                      assign value_name = value.name | default: value
+                      assign value_variant = nil
+                      assign fallback_variant = nil
+                      for variant in product.variants
+                        if variant.options[option_index] == value_name
+                          if fallback_variant == nil
+                            assign fallback_variant = variant
+                          endif
+                          if variant.available
+                            assign value_variant = variant
+                            break
+                          endif
+                        endif
+                      endfor
+                      if value_variant == nil
+                        assign value_variant = fallback_variant
+                      endif
+                    -%}
+                    {%- if value_variant != nil -%}
+                      {%- capture size_label -%}
+                        {{- 'cart_drawer.add_to_cart' | t: title: product.title -}}, {{ rec_option.name }}: {{ value_name -}}
+                      {%- endcapture -%}
+                      <button
+                        type="button"
+                        class="cart-drawer-cro__rec-size"
+                        data-quick-add-variant="{{ value_variant.id }}"
+                        aria-label="{{ size_label | escape }}"
+                        {% unless value_variant.available %}
+                          disabled
+                        {% endunless %}
+                      >
+                        {{- value_name | escape -}}
+                      </button>
+                    {%- endif -%}
+                  {%- endfor -%}
+                </div>
+              </div>
+            {%- elsif product.has_only_default_variant -%}
+              <div class="cart-drawer-cro__rec-picker">
+                <button
+                  type="button"
+                  class="cart-drawer-cro__rec-size cart-drawer-cro__rec-size--add"
+                  data-quick-add-variant="{{ rec_variant.id }}"
+                  aria-label="{{ 'cart_drawer.add_to_cart' | t: title: product.title | escape }}"
+                >
+                  + {{ 'cart_drawer.add' | t }}
+                </button>
+              </div>
+            {%- endif -%}
+          </div>
+
+          <a
+            href="{{ product.url }}"
+            class="cart-drawer-cro__rec-title"
+          >
+            {{- product.title | escape -}}
+          </a>
+
+          <div class="cart-drawer-cro__rec-price">
+            {%- if rec_on_sale -%}
+              <span class="visually-hidden">{{ 'content.price_sale' | t }}</span>
+              <span class="cart-drawer-cro__rec-price--sale"><bdi>{{ rec_price }}</bdi></span>
+              <span class="visually-hidden">{{ 'content.price_regular' | t }}</span>
+              <s class="cart-drawer-cro__rec-compare"><bdi>{{ rec_compare_price }}</bdi></s>
+            {%- else -%}
+              <span><bdi>{{ rec_price }}</bdi></span>
+            {%- endif -%}
+          </div>
+
+          <p
+            class="cart-drawer-cro__rec-error"
+            role="alert"
+            data-quick-add-error
+            hidden
+          ></p>
+        </cart-quick-add>
+      </li>
+    {%- endfor -%}
+  {%- endcapture -%}
+
+  {%- if rec_shown > 0 -%}
+    <div class="cart-drawer-cro__recs">
+      <div class="cart-drawer-cro__recs-header">
+        {%- if settings.cart_drawer_recs_heading != blank -%}
+          <h3 class="cart-drawer-cro__recs-heading">{{ settings.cart_drawer_recs_heading | escape }}</h3>
+        {%- endif -%}
+        {%- if settings.cart_drawer_recs_subheading != blank -%}
+          <p class="cart-drawer-cro__recs-subheading">{{ settings.cart_drawer_recs_subheading | escape }}</p>
+        {%- endif -%}
+      </div>
+      <ul
+        class="cart-drawer-cro__recs-list"
+        role="list"
+      >
+        {{ rec_cards }}
+      </ul>
+    </div>
+  {%- endif -%}
+{%- endif -%}
+
+{% stylesheet %}
+  .cart-drawer-cro__recs {
+    --cd-rec-gap: 0.625rem;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    margin-block-start: var(--margin-xl);
+  }
+
+  .cart-drawer-cro__recs-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--gap-2xs) var(--gap-md);
+  }
+
+  .cart-drawer-cro__recs-heading {
+    margin: 0;
+    font-size: var(--font-size--md);
+    font-weight: 600;
+  }
+
+  .cart-drawer-cro__recs-subheading {
+    margin: 0;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    font-size: var(--font-size--xs);
+  }
+
+  .cart-drawer-cro__recs-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 2 * var(--cd-rec-gap)) / 3);
+    gap: var(--cd-rec-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .cart-drawer-cro__recs-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cart-drawer-cro__rec-item {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .cart-drawer-cro__rec {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xs);
+  }
+
+  .cart-drawer-cro__rec[aria-busy='true'] {
+    pointer-events: none;
+  }
+
+  .cart-drawer-cro__rec-media {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background-color: rgb(var(--color-foreground-rgb) / 0.04);
+  }
+
+  .cart-drawer-cro__rec-image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .cart-drawer-cro__rec-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .cart-drawer-cro__rec-picker {
+    position: absolute;
+    inset-inline: 0.375rem;
+    bottom: 0.375rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.5rem;
+    background-color: var(--color-background);
+    display: none;
+  }
+
+  .cart-drawer-cro__rec-picker-label {
+    margin: 0;
+    font-family: var(--font-accent--family, inherit);
+    font-size: 0.6875rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .cart-drawer-cro__rec-sizes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .cart-drawer-cro__rec-size {
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.375rem;
+    border: 1px solid var(--cd-divider);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: var(--font-size--xs);
+    cursor: pointer;
+  }
+
+  .cart-drawer-cro__rec-size:hover:not(:disabled) {
+    border-color: var(--color-foreground);
+  }
+
+  .cart-drawer-cro__rec-size:disabled {
+    opacity: 0.4;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+
+  .cart-drawer-cro__rec-size.is-loading {
+    opacity: 0.5;
+  }
+
+  .cart-drawer-cro__rec-size--add {
+    width: 100%;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  @media (hover: hover) {
+    .cart-drawer-cro__rec-picker {
+      opacity: 0;
+      transform: translateY(0.5rem);
+      transition: opacity var(--animation-speed) var(--animation-easing),
+        transform var(--animation-speed) var(--animation-easing);
+    }
+
+    .cart-drawer-cro__rec:hover .cart-drawer-cro__rec-picker,
+    .cart-drawer-cro__rec:focus-within .cart-drawer-cro__rec-picker {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .cart-drawer-cro__rec-title {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--color-foreground);
+    font-size: var(--font-size--xs);
+    line-height: 1.3;
+    text-decoration: none;
+    text-transform: var(--product-title-case, none);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .cart-drawer-cro__rec-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.375rem;
+    font-size: var(--font-size--sm);
+  }
+
+  .cart-drawer-cro__rec-price--sale {
+    color: var(--cd-accent);
+    font-weight: 500;
+  }
+
+  .cart-drawer-cro__rec-compare {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    font-size: var(--font-size--xs);
+  }
+
+  .cart-drawer-cro__rec-error {
+    margin: 0;
+    color: var(--cd-accent);
+    font-size: var(--font-size--xs);
+  }
+
+    @media (prefers-reduced-motion: reduce) {
+    .cart-drawer-cro__rec-picker,
+    .cart-drawer-cro__tile-image {
+      transition: none;
+    }
+  }
+{% endstylesheet %}
